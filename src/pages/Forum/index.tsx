@@ -1,5 +1,5 @@
 
-import { PlusOutlined, SearchOutlined, MessageOutlined, LikeOutlined, TagsOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, MessageOutlined, LikeOutlined, TagsOutlined, FilterOutlined } from '@ant-design/icons';
 import { Button, Card, Input, List, Space, Tag, Typography, Avatar } from 'antd';
 import moment from 'moment';
 import React, { useEffect } from 'react';
@@ -10,8 +10,7 @@ const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
 
 const Forum: React.FC = () => {
-  const { initialState } = useModel('@@initialState');
-  const {
+  const { initialState } = useModel('@@initialState');  const {
     posts,
     loading,
     searchKeyword,
@@ -19,6 +18,7 @@ const Forum: React.FC = () => {
     handleSearch,
     navigateToPost,
     navigateToCreatePost,
+    navigateToAdvancedSearch,
     getRoleColor,
     getRoleText,
   } = useModel('forum');
@@ -30,8 +30,7 @@ const Forum: React.FC = () => {
   return (
     <div className={styles.forumContainer}>
       <div className={styles.header}>
-        <Title level={2}>Diễn đàn Hỏi Đáp</Title>
-        <Space size="middle">
+        <Title level={2}>Diễn đàn Hỏi Đáp</Title>        <Space size="middle">
           <Search
             placeholder="Tìm kiếm bài đăng..."
             allowClear
@@ -39,7 +38,15 @@ const Forum: React.FC = () => {
             size="large"
             onSearch={handleSearch}
             style={{ width: 400 }}
-          />          {initialState?.currentUser && (
+          />
+          <Button
+            size="large"
+            icon={<FilterOutlined />}
+            onClick={navigateToAdvancedSearch}
+          >
+            Tìm kiếm nâng cao
+          </Button>
+          {initialState?.currentUser && (
             <Button
               type="primary"
               size="large"

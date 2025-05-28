@@ -30,13 +30,18 @@
 		component: './RandomUser',
 		icon: 'ArrowsAltOutlined',
 	},
-
 	// FORUM ROUTES
 	{
 		path: '/forum',
 		name: 'Diễn đàn',
 		component: './Forum',
 		icon: 'MessageOutlined',
+	},
+	{
+		path: '/forum/search',
+		name: 'Tìm kiếm nâng cao',
+		component: './Forum/AdvancedSearch',
+		hideInMenu: true,
 	},
 	{
 		path: '/forum/create',

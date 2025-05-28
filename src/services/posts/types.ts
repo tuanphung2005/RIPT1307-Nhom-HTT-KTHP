@@ -81,3 +81,11 @@ export interface VoteResponse {
   votes?: number;
   message?: string;
 }
+
+export interface AdvancedSearchFilters {
+  keyword: string;
+  tags: string[];
+  authorRole: string;
+  dateRange: string[];
+  sortBy: 'newest' | 'oldest' | 'most_votes' | 'most_comments';
+}

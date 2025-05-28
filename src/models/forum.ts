@@ -1,6 +1,6 @@
 import { postsService } from '@/services/posts/postsService';
 import { authService } from '@/services/auth/authService';
-import type { Post, Comment, CreateCommentData, CreatePostData } from '@/services/posts/types';
+import type { Post, Comment, CreateCommentData, CreatePostData, AdvancedSearchFilters } from '@/services/posts/types';
 import { message } from 'antd';
 import { useState } from 'react';
 import { history } from 'umi';
@@ -24,6 +24,16 @@ export default () => {
   // Create post state
   const [createPostLoading, setCreatePostLoading] = useState(false);
   const [createPostContent, setCreatePostContent] = useState('');
+
+  // Advanced search state
+  const [advancedSearchResults, setAdvancedSearchResults] = useState<Post[]>([]);
+  const [advancedSearchLoading, setAdvancedSearchLoading] = useState(false);  const [searchFilters, setSearchFilters] = useState<AdvancedSearchFilters>({
+    keyword: '',
+    tags: [] as string[],
+    authorRole: '',
+    dateRange: [] as string[],
+    sortBy: 'newest' as 'newest' | 'oldest' | 'most_votes' | 'most_comments',
+  });
 
   // Posts methods
   const loadPosts = async () => {
@@ -64,6 +74,10 @@ export default () => {
 
   const navigateToForum = () => {
     history.push('/forum');
+  };
+
+  const navigateToAdvancedSearch = () => {
+    history.push('/forum/search');
   };
 
   // Post detail methods
@@ -217,6 +231,111 @@ export default () => {
   const clearCreatePost = () => {
     setCreatePostContent('');
   };
+  // Advanced search methods
+  const handleAdvancedSearch = async (filters: AdvancedSearchFilters) => {
+    setAdvancedSearchLoading(true);
+    try {
+      // Update search filters
+      setSearchFilters(filters);
+      
+      // Get all posts first
+      let posts = postsService.getAllPosts(1, 1000).data || [];
+      
+      // Apply filters
+      posts = posts.filter(post => {
+        // Keyword filter
+        if (filters.keyword && filters.keyword.trim()) {
+          const keyword = filters.keyword.toLowerCase();
+          const matchesKeyword = post.title.toLowerCase().includes(keyword) ||
+                                post.content.toLowerCase().includes(keyword) ||
+                                post.authorName.toLowerCase().includes(keyword);
+          if (!matchesKeyword) return false;
+        }
+        
+        // Tags filter
+        if (filters.tags && filters.tags.length > 0) {
+          const matchesTags = filters.tags.some((tag: string) => post.tags.includes(tag));
+          if (!matchesTags) return false;
+        }
+        
+        // Author role filter
+        if (filters.authorRole && filters.authorRole !== '') {
+          if (post.authorRole !== filters.authorRole) return false;
+        }
+        
+        // Date range filter
+        if (filters.dateRange && filters.dateRange.length === 2) {
+          const postDate = new Date(post.createdAt);
+          const startDate = new Date(filters.dateRange[0]);
+          const endDate = new Date(filters.dateRange[1]);
+          endDate.setHours(23, 59, 59, 999); // Include the entire end date
+          
+          if (postDate < startDate || postDate > endDate) return false;
+        }
+        
+        return true;
+      });
+      
+      // Sort results
+      switch (filters.sortBy) {
+        case 'oldest':
+          posts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          break;
+        case 'most_votes':
+          posts.sort((a, b) => b.votes - a.votes);
+          break;
+        case 'most_comments':
+          // For now, sort by votes since we don't have comment count on posts
+          // You could enhance this by adding comment count to posts
+          posts.sort((a, b) => b.votes - a.votes);
+          break;
+        case 'newest':
+        default:
+          posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          break;
+      }
+      
+      setAdvancedSearchResults(posts);
+      message.success(`Tìm thấy ${posts.length} bài đăng`);
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi tìm kiếm');
+    } finally {
+      setAdvancedSearchLoading(false);
+    }
+  };
+  const clearAdvancedSearch = () => {
+    setAdvancedSearchResults([]);
+    setSearchFilters({
+      keyword: '',
+      tags: [],
+      authorRole: '',
+      dateRange: [],
+      sortBy: 'newest',
+    });
+  };
+
+  // Get all available tags from posts
+  const getAllTags = () => {
+    const allPosts = postsService.getAllPosts(1, 1000).data || [];
+    const tagsSet = new Set<string>();
+    allPosts.forEach(post => {
+      post.tags.forEach(tag => tagsSet.add(tag));
+    });
+    return Array.from(tagsSet).sort();
+  };
+
+  // Get all authors
+  const getAllAuthors = () => {
+    const allPosts = postsService.getAllPosts(1, 1000).data || [];
+    const authorsMap = new Map<string, { name: string; role: string }>();
+    allPosts.forEach(post => {
+      authorsMap.set(post.authorId, {
+        name: post.authorName,
+        role: post.authorRole
+      });
+    });
+    return Array.from(authorsMap.values());
+  };
 
   // Utility methods
   const getRoleColor = (role: string) => {
@@ -308,6 +427,7 @@ export default () => {
     navigateToPost,
     navigateToCreatePost,
     navigateToForum,
+    navigateToAdvancedSearch,
     
     // Post detail methods
     loadPostData,
@@ -325,6 +445,14 @@ export default () => {
     createPost,
     handleCreatePost,
     clearCreatePost,
+      // Advanced search methods
+    advancedSearchResults,
+    advancedSearchLoading,
+    searchFilters,
+    handleAdvancedSearch,
+    clearAdvancedSearch,
+    getAllTags,
+    getAllAuthors,
       // Utility methods
     getRoleColor,
     getRoleText,
