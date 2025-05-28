@@ -27,7 +27,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
 	const fullName = initialState.currentUser?.fullName || initialState.currentUser?.username || '';
 	const userRole = initialState.currentUser?.role || '';
 	
-	// Create display name with role
+	// display  + role
 	const getRoleDisplayName = (role: string) => {
 		switch (role) {
 			case 'admin':
