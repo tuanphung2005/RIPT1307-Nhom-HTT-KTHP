@@ -4,7 +4,7 @@ import { Avatar, Menu, Spin } from 'antd';
 import { type ItemType } from 'antd/lib/menu/hooks/useItems';
 import React from 'react';
 import { useModel } from 'umi';
-import { OIDCBounder } from '../OIDCBounder';
+import { useAuthActions } from '@/hooks/useAuthActions';
 import HeaderDropdown from './HeaderDropdown';
 import styles from './index.less';
 
@@ -14,26 +14,40 @@ export type GlobalHeaderRightProps = {
 
 const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
 	const { initialState } = useModel('@@initialState');
+	const { handleLogout } = useAuthActions();
 
-	const loginOut = () => OIDCBounder?.getActions()?.dangXuat();
-
+	const loginOut = () => handleLogout();
 	if (!initialState || !initialState.currentUser)
 		return (
 			<span className={`${styles.action} ${styles.account}`}>
 				<Spin size='small' style={{ marginLeft: 8, marginRight: 8 }} />
 			</span>
 		);
-
-	const fullName = initialState.currentUser?.family_name
-		? `${initialState.currentUser.family_name} ${initialState.currentUser?.given_name ?? ''}`
-		: initialState.currentUser?.name ?? (initialState.currentUser?.preferred_username || '');
+	// use full name + suggestion fullname+@username
+	const fullName = initialState.currentUser?.fullName || initialState.currentUser?.username || '';
+	const userRole = initialState.currentUser?.role || '';
+	
+	// Create display name with role
+	const getRoleDisplayName = (role: string) => {
+		switch (role) {
+			case 'admin':
+				return 'Quản trị viên';
+			case 'teacher':
+				return 'Giảng viên';
+			case 'student':
+				return 'Sinh viên';
+			default:
+				return role;
+		}
+	};
+	
+	const displayName = `${fullName} (${getRoleDisplayName(userRole)})`;
 	const lastNameChar = fullName.split(' ')?.at(-1)?.[0]?.toUpperCase();
-
 	const items: ItemType[] = [
 		{
 			key: 'name',
 			icon: <UserOutlined />,
-			label: fullName,
+			label: displayName,
 		},
 		// {
 		// 	key: 'password',
@@ -63,10 +77,9 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
 			label: 'Đăng xuất',
 			onClick: loginOut,
 			danger: true,
-		},
-	];
+		},	];
 
-	if (menu && !initialState.currentUser.realm_access?.roles?.includes('QUAN_TRI_VIEN')) {
+	if (menu && initialState.currentUser.role !== 'admin') {
 		// items.splice(1, 0, {
 		//   key: 'center',
 		//   icon: <UserOutlined />,
@@ -74,18 +87,17 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
 		//   onClick: () => history.push('/account/center'),
 		// });
 	}
-
 	return (
 		<>
 			<HeaderDropdown overlay={<Menu className={styles.menu} items={items} />}>
 				<span className={`${styles.action} ${styles.account}`}>
 					<Avatar
 						className={styles.avatar}
-						src={initialState.currentUser?.picture ? <img src={initialState.currentUser?.picture} /> : undefined}
-						icon={!initialState.currentUser?.picture ? lastNameChar ?? <UserOutlined /> : undefined}
+						src={initialState.currentUser?.avatar}
+						icon={!initialState.currentUser?.avatar ? lastNameChar ?? <UserOutlined /> : undefined}
 						alt='avatar'
 					/>
-					<span className={`${styles.name}`}>{fullName}</span>
+					<span className={`${styles.name}`}>{displayName}</span>
 				</span>
 			</HeaderDropdown>
 		</>

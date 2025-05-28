@@ -318,7 +318,25 @@ const rules = {
 				if (string.length === 2 && string[1].length > sauDauPhay) callback('');
 				callback();
 			},
-			message: `Chỉ được ${sauDauPhay} số sau dấu phẩy`,
+			message: `Chỉ được ${sauDauPhay} số sau dấu phẩy`,		},
+	],
+	
+	// New rules for forum authentication
+	forumUsername: [
+		{
+			pattern: new RegExp('^[a-zA-Z0-9._]{4,32}$'),
+			message: 'Tên đăng nhập từ 4-32 ký tự, chỉ bao gồm chữ cái, số, dấu chấm và gạch dưới',
+		},
+	],
+	
+	forumPassword: [
+		{
+			min: 6,
+			message: 'Mật khẩu phải có ít nhất 6 ký tự',
+		},
+		{
+			max: 50,
+			message: 'Mật khẩu không được quá 50 ký tự',
 		},
 	],
 };

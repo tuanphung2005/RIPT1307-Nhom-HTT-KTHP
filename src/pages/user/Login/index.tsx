@@ -1,187 +1,242 @@
+
 import Footer from '@/components/Footer';
-import LoginWithKeycloak from '@/pages/user/Login/KeycloakLogin';
-import { adminlogin, getUserInfo } from '@/services/base/api';
-import { keycloakAuthority } from '@/utils/ip';
+import { authService } from '@/services/auth/authService';
+import type { LoginCredentials, RegisterData } from '@/services/auth/types';
 import rules from '@/utils/rules';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Tabs, message } from 'antd';
+import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Radio, Tabs, message } from 'antd';
 import React, { useState } from 'react';
-// import Recaptcha from 'react-recaptcha';
-import { history, useIntl, useModel } from 'umi';
+import { history, useModel } from 'umi';
 import styles from './index.less';
 
 const Login: React.FC = () => {
-	const [count, setCount] = useState<number>(Number(localStorage?.getItem('failed')) || 0);
 	const [submitting, setSubmitting] = useState(false);
-	const [type, setType] = useState<string>('account');
-	const { initialState, setInitialState } = useModel('@@initialState');
-	const [isVerified, setIsverified] = useState<boolean>(true);
-	const [visibleCaptcha, setVisibleCaptcha] = useState<boolean>(false);
-	// const [visibleCaptcha2, setVisibleCaptcha2] = useState<boolean>(false);
-	// const recaptchaRef = useRef(null);
-	const intl = useIntl();
-	const [form] = Form.useForm();
-
-	/**
-	 * Xử lý token, get info sau khi đăng nhập
-	 */
-	const handleRole = async (role: { access_token: string; refresh_token: string }) => {
-		// Tobe removed
-		localStorage.setItem('token', role?.access_token);
-		localStorage.setItem('refreshToken', role?.refresh_token);
-
-		// const decoded = jwt_decode(role?.access_token) as any;
-		const info = await getUserInfo();
-		setInitialState({
-			...initialState,
-			currentUser: info?.data?.data,
-			// authorizedPermissions: decoded?.authorization?.permissions,
-		});
-
-		const defaultloginSuccessMessage = intl.formatMessage({
-			id: 'pages.login.success',
-			defaultMessage: 'success',
-		});
-		message.success(defaultloginSuccessMessage);
-		history.push('/dashboard');
-	};
-
-	const handleSubmit = async (values: { login: string; password: string }) => {
+	const [type, setType] = useState<string>('login');
+	const { setInitialState } = useModel('@@initialState');
+	const [loginForm] = Form.useForm();
+	const [registerForm] = Form.useForm();
+	const handleLogin = async (values: LoginCredentials) => {
+		setSubmitting(true);
 		try {
-			if (!isVerified) {
-				message.error('Vui lòng xác thực Captcha');
-				return;
-			}
-			setSubmitting(true);
-			const msg = await adminlogin({ ...values, username: values?.login ?? '' });
-			if (msg.status === 200 && msg?.data?.data?.accessToken) {
-				handleRole(msg?.data?.data);
-				localStorage.removeItem('failed');
+			const response = authService.login(values);
+			
+			if (response.success && response.user) {
+				// state => user
+				setInitialState({
+					currentUser: response.user,
+					permissionLoading: false,
+				});
+				
+				message.success(response.message);
+				
+				// url truoc login
+				const urlParams = new URLSearchParams(window.location.search);
+				const redirect = urlParams.get('redirect') || '/dashboard';
+				history.push(redirect);
+			} else {
+				message.error(response.message);
 			}
 		} catch (error) {
-			if (count >= 4) {
-				setIsverified(false);
-				setVisibleCaptcha(!visibleCaptcha);
-				// setVisibleCaptcha2(true);
-			}
-			setCount(count + 1);
-			localStorage.setItem('failed', (count + 1).toString());
-			const defaultloginFailureMessage = intl.formatMessage({
-				id: 'pages.login.failure',
-				defaultMessage: 'failure',
-			});
-			message.error(defaultloginFailureMessage);
+			console.error('Login error:', error);
+			message.error('Có lỗi xảy ra khi đăng nhập');
+		} finally {
+			setSubmitting(false);
 		}
-		setSubmitting(false);
 	};
 
-	// const verifyCallback = (response: any) => {
-	// 	if (response) setIsverified(true);
-	// 	else setIsverified(false);
-	// };
+	const handleRegister = async (values: RegisterData) => {
+		setSubmitting(true);
+		try {
+			const response = authService.register(values);
+			
+			if (response.success) {
+				message.success(response.message);
+				registerForm.resetFields();
+				setType('login'); // toi login
+			} else {
+				message.error(response.message);
+			}
+		} catch (error) {
+			message.error('Có lỗi xảy ra khi đăng ký');
+		} finally {
+			setSubmitting(false);
+		}
+	};
 
 	return (
 		<div className={styles.container}>
 			<div className={styles.content}>
 				<div className={styles.top}>
 					<div className={styles.header}>
-						<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+						<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
 							<img alt='logo' className={styles.logo} src='/logo-full.svg' />
+							<div style={{ textAlign: 'center', marginTop: 16 }}>
+								<h1 style={{ fontSize: 28, fontWeight: 'bold', color: '#1890ff', margin: 0 }}>
+									Diễn đàn Hỏi Đáp Sinh viên
+								</h1>
+								<p style={{ color: '#666', fontSize: 16, margin: '8px 0 0 0' }}>
+									Nền tảng chia sẻ kiến thức học thuật
+								</p>
+							</div>
 						</div>
 					</div>
 				</div>
 
 				<div className={styles.main}>
-					<Tabs activeKey={type} onChange={setType}>
-						<Tabs.TabPane
-							key='account'
-							tab={intl.formatMessage({
-								id: 'pages.login.accountLogin.tab',
-								defaultMessage: 'tab',
-							})}
-						/>
-						{/* <Tabs.TabPane
-              key="accountAdmin"
-              tab={intl.formatMessage({
-                id: 'pages.login.accountLoginAdmin.tab',
-                defaultMessage: 'tab',
-              })}
-            /> */}
-					</Tabs>
+					<Card style={{ maxWidth: 450, margin: '0 auto', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+						<Tabs activeKey={type} onChange={setType} centered size="large">
+							<Tabs.TabPane key='login' tab='Đăng nhập' />
+							<Tabs.TabPane key='register' tab='Đăng ký' />
+						</Tabs>
 
-					{type === 'account' ? (
-						<LoginWithKeycloak />
-					) : type === 'accountAdmin' ? (
-						<Form
-							form={form}
-							onFinish={async (values) => handleSubmit(values as { login: string; password: string })}
-							layout='vertical'
-						>
-							<Form.Item label='' name='login' rules={[...rules.required]}>
-								<Input
-									placeholder={intl.formatMessage({
-										id: 'pages.login.username.placeholder',
-										defaultMessage: 'Nhập tên đăng nhập',
-									})}
-									prefix={<UserOutlined className={styles.prefixIcon} />}
-									size='large'
-								/>
-							</Form.Item>
-							<Form.Item label='' name='password' rules={[...rules.required]}>
-								<Input.Password
-									placeholder={intl.formatMessage({
-										id: 'pages.login.password.placeholder',
-										defaultMessage: 'Nhập mật khẩu',
-									})}
-									prefix={<LockOutlined className={styles.prefixIcon} />}
-									size='large'
-								/>
-							</Form.Item>
+						{type === 'login' ? (
+							<Form
+								form={loginForm}
+								onFinish={handleLogin}
+								layout='vertical'
+								size='large'
+							>
+								<Form.Item 
+									name='username' 
+									rules={[...rules.required]}
+									label="Tên đăng nhập"
+								>
+									<Input
+										placeholder='Nhập tên đăng nhập'
+										prefix={<UserOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
+								
+								<Form.Item 
+									name='password' 
+									rules={[...rules.required]}
+									label="Mật khẩu"
+								>
+									<Input.Password
+										placeholder='Nhập mật khẩu'
+										prefix={<LockOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
 
-							<Button type='primary' block size='large' loading={submitting}>
-								{intl.formatMessage({
-									id: 'pages.login.submit',
-									defaultMessage: 'submit',
-								})}
-							</Button>
-						</Form>
-					) : null}
+								<Form.Item>
+									<Button 
+										type='primary' 
+										htmlType='submit' 
+										loading={submitting}
+										block
+										size="large"
+										style={{ height: 45 }}
+									>
+										Đăng nhập
+									</Button>
+								</Form.Item>
 
-					<br />
-					<div style={{ textAlign: 'center' }}>
-						<Button
-							onClick={() => {
-								window.open(keycloakAuthority + '/login-actions/reset-credentials');
-							}}
-							type='link'
-						>
-							Quên mật khẩu?
-						</Button>
+								<div style={{ textAlign: 'center', marginTop: 16 }}>
+									<small style={{ color: '#666' }}>
+										💡 Demo: Đăng nhập với <strong>admin</strong> (bất kỳ mật khẩu nào)
+									</small>
+								</div>
+							</Form>
+						) : (
+							<Form
+								form={registerForm}
+								onFinish={handleRegister}
+								layout='vertical'
+								size='large'
+							>
+								<Form.Item 
+									name='fullName' 
+									rules={[...rules.required, ...rules.ten]}
+									label="Họ và tên"
+								>
+									<Input
+										placeholder='Nhập họ và tên'
+										prefix={<UserOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
 
-						{/* {type === 'accountAdmin' && visibleCaptcha && count >= 5 && (
-              <Recaptcha
-                ref={recaptchaRef}
-                size="normal"
-                sitekey="6LelHsEeAAAAAJmsVdeC2EPNCAVEtfRBUGSKireh"
-                render="explicit"
-                hl="vi"
-                // onloadCallback={callback}
-                verifyCallback={verifyCallback}
-              />
-            )}
+								<Form.Item 
+									name='username' 
+									rules={[...rules.required, ...rules.forumUsername]}
+									label="Tên đăng nhập"
+								>
+									<Input
+										placeholder='Nhập tên đăng nhập'
+										prefix={<UserOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
+								
+								<Form.Item 
+									name='email' 
+									rules={[...rules.required, ...rules.email]}
+									label="Email"
+								>
+									<Input
+										placeholder='Nhập email'
+										prefix={<MailOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
+								
+								<Form.Item 
+									name='password' 
+									rules={[...rules.required, ...rules.forumPassword]}
+									label="Mật khẩu"
+								>
+									<Input.Password
+										placeholder='Nhập mật khẩu'
+										prefix={<LockOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
 
-            {type === 'accountAdmin' && !visibleCaptcha && visibleCaptcha2 && count >= 5 && (
-              <Recaptcha
-                ref={recaptchaRef}
-                size="normal"
-                sitekey="6LelHsEeAAAAAJmsVdeC2EPNCAVEtfRBUGSKireh"
-                render="explicit"
-                hl="vi"
-                // onloadCallback={callback}
-                verifyCallback={verifyCallback}
-              />
-            )} */}
-					</div>
+								<Form.Item 
+									name='confirmPassword' 
+									dependencies={['password']}
+									rules={[
+										...rules.required,
+										({ getFieldValue }) => ({
+											validator(_, value) {
+												if (!value || getFieldValue('password') === value) {
+													return Promise.resolve();
+												}
+												return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+											},
+										}),
+									]}
+									label="Xác nhận mật khẩu"
+								>
+									<Input.Password
+										placeholder='Nhập lại mật khẩu'
+										prefix={<LockOutlined style={{ color: '#1890ff' }} />}
+									/>
+								</Form.Item>
+
+								<Form.Item 
+									name='role' 
+									rules={[...rules.required]}
+									initialValue='student'
+									label="Vai trò"
+								>
+									<Radio.Group>
+										<Radio value='student'>Sinh viên</Radio>
+										<Radio value='teacher'>Giảng viên</Radio>
+									</Radio.Group>
+								</Form.Item>
+
+								<Form.Item>
+									<Button 
+										type='primary' 
+										htmlType='submit' 
+										loading={submitting}
+										block
+										size="large"
+										style={{ height: 45 }}
+									>
+										Đăng ký
+									</Button>
+								</Form.Item>
+							</Form>
+						)}
+					</Card>
 				</div>
 			</div>
 

@@ -1,5 +1,8 @@
 import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
+// import SessionManager from '@/components/SessionManager';
+import { authService } from '@/services/auth/authService';
+// import { useSessionManager } from '@/hooks/useSessionManager';
 import { notification } from 'antd';
 import 'moment/locale/vi';
 import type { RequestConfig, RunTimeLayoutConfig } from 'umi';
@@ -16,7 +19,11 @@ export const initialStateConfig = {
 };
 
 export async function getInitialState(): Promise<IInitialState> {
+    // check xem user dang nhap chua
+    const currentUser = authService.getCurrentUser();
+    
     return {
+        currentUser,
         permissionLoading: false,
     };
 }
@@ -53,12 +60,25 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
         noFound: <NotFoundContent />,
         rightContentRender: () => <RightContent />,
         disableContentMargin: false,
-        footerRender: () => <Footer />,
-
-        onPageChange: () => {
+        footerRender: () => <Footer />,        onPageChange: () => {
             const { location } = history;
+            
+            // check auth cho routes protected
+            const isAuthenticated = authService.isAuthenticated();
+            const isLoginPage = location.pathname === '/user/login';
+            
+            if (!isAuthenticated && !isLoginPage) {
+                history.replace('/user/login');
+                return;
+            }
+            
+            if (isAuthenticated && isLoginPage) {
+                history.replace('/dashboard');
+                return;
+            }
+            
             if (location.pathname === '/') {
-                history.replace('/dashboard'); // or '/forum'
+                history.replace(isAuthenticated ? '/dashboard' : '/user/login');
             }
         },
 
@@ -75,11 +95,16 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
             >
                 {dom}
             </a>
-        ),
-
-        childrenRender: (dom) => (
+        ),        childrenRender: (dom) => (
             <ErrorBoundary>
-                {dom}
+                <>                {dom}
+                    {/* hay
+					{initialState?.currentUser && (
+                        <div style={{ display: 'none' }}>
+                            <SessionManager />
+                        </div>
+                    )} */}
+                </>
             </ErrorBoundary>
         ),
         

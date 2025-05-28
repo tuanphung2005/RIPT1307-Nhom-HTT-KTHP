@@ -1,19 +1,20 @@
 // import { refreshAccesssToken } from '@/services/ant-design-pro/api';
+import { authService } from '@/services/auth/authService';
 import { message, notification } from 'antd';
 import axios from 'axios';
-// import { history } from 'umi';
+import { history } from 'umi';
 import data from './data';
 
-// function routeLogin(errorCode: string) {
-//   // notification.warning({
-//   //   message: 'Vui lòng đăng nhập lại',
-//   //   description: data.error[errorCode],
-//   // });
-//   // localStorage.clear();
-//   history.replace({
-//     pathname: '/user/login',
-//   });
-// }
+function routeLogin(errorCode: string) {
+  notification.warning({
+    message: 'Vui lòng đăng nhập lại',
+    description: data.error[errorCode] || 'Phiên đăng nhập đã hết hạn',
+  });
+  authService.logout();
+  history.replace({
+    pathname: '/user/login',
+  });
+}
 
 // for multiple request
 // let isRefreshing = false;
@@ -30,29 +31,23 @@ import data from './data';
 // };
 
 /**
- * Chuyển sang xử lý access_token with OIDC auth ở Technical Support
+ * Simple request interceptor for basic authentication check
  */
 // Add a request interceptor
-// axios.interceptors.request.use(
-//   (config) => {
-//     if (!config.headers.Authorization) {
-//       const token = localStorage.getItem('token');
-//       if (token) {
-//         // eslint-disable-next-line no-param-reassign
-//         config.headers.Authorization = `Bearer ${token}`;
-//       }
-//     }
-//     return config;
-//   },
-//   (error) => Promise.reject(error),
-// );
+axios.interceptors.request.use(
+  (config) => {
+    // Just pass through the request - no token management needed
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 // Add a response interceptor
 axios.interceptors.response.use(
 	(response) =>
 		// Do something with response data
 		response,
-	(error) => {
+	async (error) => {
 		let er = error?.response?.data;
 		// Convert response data to JSON
 		if ((error?.response?.config?.responseType as string)?.toLowerCase() === 'arraybuffer') {
@@ -79,16 +74,9 @@ axios.interceptors.response.use(
 						message: 'Dữ liệu chưa đúng (004)',
 						description: descriptionError,
 					});
-					break;
-
-				case 401:
-					// Nếu có access token (có thể access token hết hạn) thì mới cảnh báo
-					if (originalRequest?.headers?.Authorization)
-						notification.error({
-							message: 'Phiên đăng nhập đã thay đổi (104)',
-							description: 'Vui lòng tải lại trang (F5) để cập nhật. Chú ý các dữ liệu chưa lưu sẽ bị mất!',
-						});
-					if (originalRequest._retry) break;
+					break;				case 401:
+					// Handle authentication errors - just logout and redirect
+					routeLogin(er?.errorCode || 'UNAUTHORIZED');
 					break;
 				// return routeLogin('Unauthorize');
 

@@ -1,5 +1,6 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import type { EModuleKey, EScopeFile, ESettingKey, EStorageFile } from './constant';
+import type { User } from '@/services/auth/types';
 
 declare module Login {
 	export interface IUser {
@@ -42,7 +43,7 @@ declare module Login {
 
 export interface IInitialState {
 	settings?: Partial<LayoutSettings>;
-	currentUser?: Login.IUser;
+	currentUser?: Login.IUser | User;
 	authorizedPermissions?: Login.IPermission[];
 	permissionLoading?: boolean;
 }
