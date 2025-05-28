@@ -1,0 +1,117 @@
+
+@import '~antd/es/style/themes/default.less';
+
+.forumContainer {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: calc(100vh - 64px);
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+
+    h2 {
+      margin: 0;
+      color: @primary-color;
+    }
+  }
+
+  .content {
+    .ant-list-item {
+      padding: 0;
+      margin-bottom: 16px;
+      border: none;
+    }
+
+    .postCard {
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+      cursor: pointer;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .postHeader {
+        margin-bottom: 12px;
+
+        .authorInfo {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+      }
+
+      .postContent {
+        margin-bottom: 16px;
+
+        .postTitle {
+          margin-bottom: 8px !important;
+          color: @heading-color;
+          
+          &:hover {
+            color: @primary-color;
+          }
+        }
+
+        .postDescription {
+          margin-bottom: 0;
+          color: @text-color-secondary;
+
+          .ant-typography {
+            margin-bottom: 0;
+          }
+
+          // Style for HTML content preview
+          :global {
+            p {
+              margin-bottom: 0;
+            }
+            
+            img {
+              max-width: 100%;
+              height: auto;
+            }
+          }
+        }
+      }
+
+      .postFooter {
+        border-top: 1px solid @border-color-split;
+        padding-top: 12px;
+        color: @text-color-secondary;
+
+        .ant-space-item {
+          display: flex;
+          align-items: center;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .forumContainer {
+    padding: 16px;
+
+    .header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+
+      .ant-input-search {
+        width: 100% !important;
+      }
+    }
+  }
+}
