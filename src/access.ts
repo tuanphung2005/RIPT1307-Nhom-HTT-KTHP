@@ -1,4 +1,5 @@
 import type { IInitialState } from './services/base/typing';
+import type { User } from './services/auth/types';
 // import { currentRole } from './utils/ip';
 
 /**
@@ -7,8 +8,16 @@ import type { IInitialState } from './services/base/typing';
 export default function access(initialState: IInitialState) {
 	// const scopes = initialState.authorizedPermissions?.find((item) => item.rsname === currentRole)?.scopes;
 	const scopes = initialState.authorizedPermissions?.map((item) => item.scopes).flat();
-
+	
+	// Check if currentUser is of type User (has role property)
+	const isUserWithRole = (user: any): user is User => {
+		return user && typeof user.role === 'string';
+	};
+	
 	return {
+		// Admin access control for forum
+		canAdmin: isUserWithRole(initialState?.currentUser) && initialState.currentUser.role === 'admin',
+		
 		// canBoQLKH: token && vaiTro && vaiTro === 'can_bo_qlkh',
 		// lanhDao: token && vaiTro && vaiTro === 'lanh_dao',
 		// sinhVienVaNhanVien: token && vaiTro && ['nhan_vien', 'sinh_vien'].includes(vaiTro),

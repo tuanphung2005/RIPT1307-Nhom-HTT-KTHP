@@ -1,40 +1,27 @@
-# WEB BASE V3
+# DANH SÁCH TÍNH NĂNG
+Diễn đàn Hỏi Đáp Sinh viên 
+Ý tưởng chính: Tạo một nền tảng diễn đàn học thuật dạng Q&A nơi sinh viên và giảng 
+viên có thể đặt câu hỏi, thảo luận, chia sẻ kiến thức giống như StackOverflow. 
+Yêu cầu: 
+## Sinh viên/giảng viên: 
 
-## Web base v3 based on:
++ Đăng ký/đăng nhập (phân quyền rõ vai trò sinh viên/giảng viên) 
 
-- React 17, umijs, antd v4
-- TypeScript
-- SSO with Keycloak
-- Back-end: NestJS, PostgreSQL
++ Đăng bài: tiêu đề, nội dung, tag (theo môn/lớp/khoa/lĩnh vực…) 
 
-This project is initialized with [Web Base](https://pro.ant.design). Follow is the quick guide for how to use.
++ Bình luận bài, trả lời bình luận 
 
-## Environment Prepare
++ Vote (+/-) cho bài và cho bình luận 
 
-Install `node_modules`:
++ Tìm kiếm theo từ khóa, bộ lọc theo tag 
 
-```bash
-yarn
-```
+## Quản trị viên: 
++ Xem danh sách bài đăng 
 
-## Provided Scripts
++ Xem chi tiết bài đăng (Tiêu đề, nội dung, tag, bình luận) 
 
-RIPT S-Link provides some useful script to help you quick start and build with web project, code style check and test.
++ Xóa bài 
 
-Scripts provided in `package.json`. It's safe to modify or add additional script:
++ Quản lý danh sách người dùng (Thêm/sửa/xóa/Cấp lại mật khẩu/Khóa tài khoản) 
 
-### Start project
-
-```bash
-yarn start
-```
-
-### Build project
-
-```bash
-yarn build
-```
-# RIPT1307-Nh-m-HTTT-KTHP
-# RIPT1307-Nh-m-HTTT-KTHP
-# RIPT1307-Nh-m-HTTT-KTHP
-# RIPT1307-Nh-m-HTTT-KTHP
++ Tự động gửi email khi có bài đăng mới/khi có người trả lời bình luận

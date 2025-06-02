@@ -389,13 +389,39 @@ export default () => {
     // User hasn't voted
     return null;
   };
-
   const clearPostDetail = () => {
     setCurrentPost(null);
     setComments([]);
     setCommentContent('');
     setReplyContent('');
     setReplyingTo(null);
+  };
+
+  // Admin methods
+  const getAllPosts = async (): Promise<Post[]> => {
+    try {
+      const response = postsService.getAllPosts(1, 1000);
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Error getting all posts:', error);
+      throw error;
+    }
+  };
+
+  const deletePost = async (postId: string): Promise<void> => {
+    try {
+      const response = postsService.deletePost(postId);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      throw error;
+    }
   };
 
   return {
@@ -452,11 +478,14 @@ export default () => {
     handleAdvancedSearch,
     clearAdvancedSearch,
     getAllTags,
-    getAllAuthors,
-      // Utility methods
+    getAllAuthors,    // Utility methods
     getRoleColor,
     getRoleText,
     hasUserVoted,
     getUserVoteType,
+    
+    // Admin methods
+    getAllPosts,
+    deletePost,
   };
 };

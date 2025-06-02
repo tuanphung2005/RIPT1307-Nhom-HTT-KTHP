@@ -22,14 +22,37 @@
 		path: '/dashboard',
 		name: 'Dashboard',
 		component: './TrangChu',
-		icon: 'HomeOutlined',
-	},
+		icon: 'HomeOutlined',	},
 	{
 		path: '/random-user',
 		name: 'RandomUser',
 		component: './RandomUser',
 		icon: 'ArrowsAltOutlined',
 	},
+
+	// ADMIN ROUTES
+	{
+		path: '/admin',
+		name: 'Quản trị',
+		icon: 'SettingOutlined',
+		access: 'canAdmin',
+		routes: [
+			{
+				path: '/admin/posts',
+				name: 'Quản lý bài đăng',
+				component: './Admin/PostManagement',
+			},
+			{
+				path: '/admin/users',
+				name: 'Quản lý người dùng',
+				component: './Admin/UserManagement',
+			},
+			{
+				redirect: '/admin/posts',
+			},
+		],
+	},
+
 	// FORUM ROUTES
 	{
 		path: '/forum',
@@ -41,7 +64,7 @@
 		path: '/forum/search',
 		name: 'Tìm kiếm nâng cao',
 		component: './Forum/AdvancedSearch',
-		hideInMenu: true,
+
 	},
 	{
 		path: '/forum/create',

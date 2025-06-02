@@ -359,7 +359,6 @@ class PostsService {
       };
     }
   }
-
   // Migrate existing data to include upvotedBy/downvotedBy arrays
   migrateExistingData(): void {
     try {
@@ -396,6 +395,57 @@ class PostsService {
       }
     } catch (error) {
       console.error('Error migrating existing data:', error);
+    }
+  }
+
+  // Delete a post by ID (Admin only)
+  deletePost(postId: string): PostResponse {
+    try {
+      const currentUser = authService.getCurrentUser();
+      
+      if (!currentUser) {
+        return {
+          success: false,
+          message: 'Vui lòng đăng nhập để thực hiện thao tác này'
+        };
+      }
+
+      if (currentUser.role !== 'admin') {
+        return {
+          success: false,
+          message: 'Bạn không có quyền xóa bài đăng'
+        };
+      }
+
+      const posts = this.getPosts();
+      const postIndex = posts.findIndex(post => post.id === postId);
+      
+      if (postIndex === -1) {
+        return {
+          success: false,
+          message: 'Không tìm thấy bài đăng'
+        };
+      }
+
+      // Remove the post
+      posts.splice(postIndex, 1);
+      this.savePosts(posts);
+
+      // Also remove all comments related to this post
+      const comments = this.getComments();
+      const updatedComments = comments.filter(comment => comment.postId !== postId);
+      this.saveComments(updatedComments);
+
+      return {
+        success: true,
+        message: 'Xóa bài đăng thành công'
+      };
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      return {
+        success: false,
+        message: 'Có lỗi xảy ra khi xóa bài đăng'
+      };
     }
   }
 }
