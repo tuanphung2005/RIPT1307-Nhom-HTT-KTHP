@@ -1,4 +1,3 @@
-
 import {
   ArrowLeftOutlined,
   LikeOutlined,
@@ -23,6 +22,7 @@ import {
 import moment from 'moment';
 import React, { useEffect } from 'react';
 import { useModel } from 'umi';
+import usePostDetail from '@/models/postDetail';
 import styles from './PostDetail.less';
 
 const { Title, Text, Paragraph } = Typography;
@@ -53,11 +53,12 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
     handleVote,
     handleSubmitComment,
     handleReply,
-    cancelReply,    navigateToForum,
+    cancelReply,
+    navigateToForum,
     getRoleColor,
     getRoleText,
     getUserVoteType,
-  } = useModel('forum');
+  } = usePostDetail();
 
   const postId = match.params.id;
 
