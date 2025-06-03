@@ -1,4 +1,3 @@
-
 import {
   ArrowLeftOutlined,
   LikeOutlined,
@@ -53,11 +52,12 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
     handleVote,
     handleSubmitComment,
     handleReply,
-    cancelReply,    navigateToForum,
+    cancelReply,
+    navigateToForum,
     getRoleColor,
     getRoleText,
     getUserVoteType,
-  } = useModel('forum');
+  } = useModel('postDetail');
 
   const postId = match.params.id;
 
