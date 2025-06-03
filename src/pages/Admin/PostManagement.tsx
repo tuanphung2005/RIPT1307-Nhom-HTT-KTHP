@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Typography } from 'antd';
-import usePostManagement from '@/models/postManagement';
+import { useModel } from 'umi';
 import PostFilters from '@/components/Admin/PostFilters';
 import PostTable from '@/components/Admin/PostTable';
 
@@ -20,7 +20,7 @@ const PostManagement: React.FC = () => {
     handleDeletePost,
     applyFilters,
     clearFilters
-  } = usePostManagement();
+  } = useModel('postManagement');
 
   useEffect(() => {
     loadPosts();

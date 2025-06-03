@@ -22,7 +22,6 @@ import {
 import moment from 'moment';
 import React, { useEffect } from 'react';
 import { useModel } from 'umi';
-import usePostDetail from '@/models/postDetail';
 import styles from './PostDetail.less';
 
 const { Title, Text, Paragraph } = Typography;
@@ -58,7 +57,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
     getRoleColor,
     getRoleText,
     getUserVoteType,
-  } = usePostDetail();
+  } = useModel('postDetail');
 
   const postId = match.params.id;
 

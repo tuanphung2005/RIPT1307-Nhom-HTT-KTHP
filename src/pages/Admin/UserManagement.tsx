@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Typography, Form } from 'antd';
+import { useModel } from 'umi';
 import type { User } from '@/services/auth/types';
 import type { UserFormData } from '@/services/admin/userTypes';
-import useUserManagement from '@/models/userManagement';
 import UserFiltersComponent from '@/components/Admin/UserFilters';
 import UserTable from '@/components/Admin/UserTable';
 import UserModals from '@/components/Admin/UserModals';
@@ -32,7 +32,7 @@ const UserManagement: React.FC = () => {
     handleToggleUserStatus,
     handleResetPassword,
     clearFilters
-  } = useUserManagement();
+  } = useModel('userManagement');
 
   useEffect(() => {
     loadUsers();
