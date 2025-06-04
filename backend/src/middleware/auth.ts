@@ -14,15 +14,16 @@ export interface AuthRequest extends Request {
   };
 }
 
-export async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
+export async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       message: 'Access token required'
     });
+    return;
   }
 
   try {
@@ -33,36 +34,40 @@ export async function authenticateToken(req: AuthRequest, res: Response, next: N
     });
 
     if (!user || !user.isActive) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Invalid or inactive user'
       });
+      return;
     }
 
     req.user = mapUserToResponse(user);
     next();
   } catch (error) {
-    return res.status(403).json({
+    res.status(403).json({
       success: false,
       message: 'Invalid or expired token'
     });
+    return;
   }
 }
 
 export function requireRole(roles: string[]) {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
+      return;
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         message: 'Insufficient permissions'
       });
+      return;
     }
 
     next();

@@ -50,12 +50,11 @@ export function mapPostToResponse(
 ): PostResponse {
   const upvotedBy = post.postVotes?.filter(v => v.type === 'UPVOTE').map(v => v.userId) || [];
   const downvotedBy = post.postVotes?.filter(v => v.type === 'DOWNVOTE').map(v => v.userId) || [];
-
   return {
     id: post.id,
     title: post.title,
     content: post.content,
-    tags: Array.isArray(post.tags) ? post.tags : [],
+    tags: Array.isArray(post.tags) ? (post.tags as string[]) : [],
     authorId: post.authorId,
     authorName: post.authorName,
     authorRole: mapUserRole(post.authorRole),
