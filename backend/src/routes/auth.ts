@@ -1,23 +1,24 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { prisma } from '@/config/database';
 import { mapUserToResponse, mapToUserRole } from '@/utils/mappers';
-import { authenticateToken, AuthRequest } from '@/middleware/auth';
+import { authenticateToken, requireRole, AuthRequest } from '@/middleware/auth';
 import { LoginRequest, RegisterRequest, ApiResponse, AuthResponse } from '@/types/api';
 
 const router = express.Router();
 
 // Login
-router.post('/login', async (req: express.Request, res: express.Response) => {
+router.post('/login', async (req: express.Request, res: express.Response): Promise<void> => {
   try {
     const { email, password }: LoginRequest = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Email and password are required'
       });
+      return;
     }
 
     const user = await prisma.user.findUnique({
@@ -25,24 +26,22 @@ router.post('/login', async (req: express.Request, res: express.Response) => {
     });
 
     if (!user || !user.isActive) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+      return;
+    }    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
-    }
-
-    const token = jwt.sign(
+      return;
+    }    const token = jwt.sign(
       { userId: user.id },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      process.env.JWT_SECRET as string,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as SignOptions
     );
 
     const response: ApiResponse<AuthResponse> = {
@@ -65,15 +64,16 @@ router.post('/login', async (req: express.Request, res: express.Response) => {
 });
 
 // Register
-router.post('/register', async (req: express.Request, res: express.Response) => {
+router.post('/register', async (req: express.Request, res: express.Response): Promise<void> => {
   try {
     const { username, email, password, fullName, role = 'student' }: RegisterRequest = req.body;
 
     if (!username || !email || !password || !fullName) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'All fields are required'
       });
+      return;
     }
 
     // Check if user already exists
@@ -87,10 +87,11 @@ router.post('/register', async (req: express.Request, res: express.Response) => 
     });
 
     if (existingUser) {
-      return res.status(409).json({
+      res.status(409).json({
         success: false,
         message: 'User with this email or username already exists'
       });
+      return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -104,12 +105,10 @@ router.post('/register', async (req: express.Request, res: express.Response) => 
         role: mapToUserRole(role),
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=52c41a&color=fff`
       }
-    });
-
-    const token = jwt.sign(
+    });    const token = jwt.sign(
       { userId: user.id },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      process.env.JWT_SECRET as string,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as SignOptions
     );
 
     const response: ApiResponse<AuthResponse> = {
@@ -119,9 +118,7 @@ router.post('/register', async (req: express.Request, res: express.Response) => 
         user: mapUserToResponse(user),
         token
       }
-    };
-
-    res.status(201).json(response);
+    };    res.status(201).json(response);
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({
@@ -132,7 +129,7 @@ router.post('/register', async (req: express.Request, res: express.Response) => 
 });
 
 // Get current user
-router.get('/me', authenticateToken, async (req: AuthRequest, res: express.Response) => {
+router.get('/me', authenticateToken, async (req: AuthRequest, res: express.Response): Promise<void> => {
   try {
     const response: ApiResponse = {
       success: true,
