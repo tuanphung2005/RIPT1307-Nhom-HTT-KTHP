@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
-import authRoutes from '@/routes/auth';
-import postRoutes from '@/routes/posts';
-import commentRoutes from '@/routes/comments';
+import authRoutes from './routes/auth';
+import postRoutes from './routes/posts';
+import commentRoutes from './routes/comments';
 
 const app = express();
 const prisma = new PrismaClient();

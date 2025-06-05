@@ -1,7 +1,7 @@
 import { User, Post, Comment, UserRole } from '@prisma/client';
-import { UserResponse, PostResponse, CommentResponse } from '@/types/api';
+import { UserResponse, PostResponse, CommentResponse } from '../types/api';
 
-// Map database UserRole enum to frontend string
+// Map database UserRole enum => frontend string
 export function mapUserRole(role: UserRole): 'student' | 'teacher' | 'admin' {
   switch (role) {
     case 'STUDENT':
@@ -15,7 +15,7 @@ export function mapUserRole(role: UserRole): 'student' | 'teacher' | 'admin' {
   }
 }
 
-// Map frontend role string to database UserRole enum
+// Map frontend role string => database UserRole enum
 export function mapToUserRole(role: string): UserRole {
   switch (role.toLowerCase()) {
     case 'teacher':
@@ -28,7 +28,7 @@ export function mapToUserRole(role: string): UserRole {
   }
 }
 
-// Map User model to UserResponse
+// Map User model => UserResponse
 export function mapUserToResponse(user: User): UserResponse {
   return {
     id: user.id,
@@ -42,7 +42,7 @@ export function mapUserToResponse(user: User): UserResponse {
   };
 }
 
-// Map Post model to PostResponse
+// Map Post model => PostResponse
 export function mapPostToResponse(
   post: Post & { 
     author?: {
@@ -84,7 +84,7 @@ export function mapPostToResponse(
   };
 }
 
-// Map Comment model to CommentResponse
+// Map Comment model => CommentResponse
 export function mapCommentToResponse(
   comment: Comment & {
     author?: {
@@ -104,8 +104,8 @@ export function mapCommentToResponse(
     authorRole: comment.author ? mapUserRole(comment.author.role) : mapUserRole(comment.authorRole),
     parentCommentId: comment.parentCommentId || undefined,
     votes,
-    upvotedBy: [], // Will be populated by the API route
-    downvotedBy: [], // Will be populated by the API route
+    upvotedBy: [],
+    downvotedBy: [],
     createdAt: comment.createdAt.toISOString(),
     updatedAt: comment.updatedAt.toISOString(),
   };

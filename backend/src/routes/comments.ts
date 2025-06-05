@@ -5,14 +5,14 @@ import type { VoteRequest } from '../types/api';
 
 const router = Router();
 
-// Vote on a comment
+// Vote
 router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const commentId = req.params.id;
     const { type } = req.body; // 'upvote', 'downvote', or 'remove'
     const userId = req.user!.id;
 
-    // Check if comment exists
+    // Check comment existence
     const comment = await prisma.comment.findUnique({
       where: { id: commentId }
     });
@@ -24,7 +24,7 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
       });
     }
 
-    // Check if user has already voted
+    // Check user vote
     const existingVote = await prisma.commentVote.findUnique({
       where: {
         commentId_userId: {
@@ -32,58 +32,89 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
           commentId
         }
       }
-    });
-
-    if (type === 'remove') {
-      // Remove existing vote
+    });    if (type === 'remove') {
+      // Remove vote
       if (existingVote) {
-        await prisma.commentVote.delete({
-          where: {
-            commentId_userId: {
-              userId,
-              commentId
+        const voteValue = existingVote.type === 'UPVOTE' ? -1 : 1;
+        
+        await prisma.$transaction([
+          prisma.commentVote.delete({
+            where: {
+              commentId_userId: {
+                userId,
+                commentId
+              }
             }
-          }
-        });
+          }),
+          prisma.comment.update({
+            where: { id: commentId },
+            data: {
+              voteCount: {
+                increment: voteValue
+              }
+            }
+          })
+        ]);
       }
     } else {
       const voteType = type === 'upvote' ? 'UPVOTE' : 'DOWNVOTE';
+      const voteValue = voteType === 'UPVOTE' ? 1 : -1;
       
       if (existingVote) {
-        // Update existing vote
-        await prisma.commentVote.update({
-          where: {
-            commentId_userId: {
-              userId,
-              commentId
+        // Update vote
+        const oldVoteValue = existingVote.type === 'UPVOTE' ? -1 : 1;
+        const voteChange = voteValue - oldVoteValue;
+        
+        await prisma.$transaction([
+          prisma.commentVote.update({
+            where: {
+              commentId_userId: {
+                userId,
+                commentId
+              }
+            },
+            data: { type: voteType }
+          }),
+          prisma.comment.update({
+            where: { id: commentId },
+            data: {
+              voteCount: {
+                increment: voteChange
+              }
             }
-          },
-          data: { type: voteType }
-        });
+          })
+        ]);
       } else {
-        // Create new vote
-        await prisma.commentVote.create({
-          data: {
-            userId,
-            commentId,
-            type: voteType
-          }
-        });
+        // New vote
+        await prisma.$transaction([
+          prisma.commentVote.create({
+            data: {
+              userId,
+              commentId,
+              type: voteType
+            }
+          }),
+          prisma.comment.update({
+            where: { id: commentId },
+            data: {
+              voteCount: {
+                increment: voteValue
+              }
+            }
+          })
+        ]);
       }
     }
 
-    // Calculate new vote count
-    const upvotes = await prisma.commentVote.count({
-      where: { commentId, type: 'UPVOTE' }
+    // update vote count
+    const updatedComment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { voteCount: true }
     });
-    const downvotes = await prisma.commentVote.count({
-      where: { commentId, type: 'DOWNVOTE' }
-    });
-    const votes = upvotes - downvotes;
 
     return res.json({
       success: true,
-      votes
+      votes: updatedComment?.voteCount || 0
     });
   } catch (error) {
     console.error('Error voting on comment:', error);

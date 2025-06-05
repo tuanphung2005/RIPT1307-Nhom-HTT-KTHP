@@ -70,14 +70,14 @@ export interface AuthResponse {
   token: string;
 }
 
-// Post creation types
+// Post  types
 export interface CreatePostRequest {
   title: string;
   content: string;
   tags: string[];
 }
 
-// Comment creation types
+// Comment types
 export interface CreateCommentRequest {
   postId: string;
   content: string;
@@ -99,7 +99,7 @@ export interface SearchFilters {
   sortBy?: 'newest' | 'oldest' | 'most_votes' | 'most_comments';
 }
 
-// Extended Request types with user context
+// user context
 import { Request } from 'express';
 
 export interface AuthenticatedRequest extends Request {
