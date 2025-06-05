@@ -48,6 +48,11 @@ model Post {
   comments     Comment[]
   postVotes    PostVote[]
 
+  // Indexes for better search performance
+  @@index([title])
+  @@index([createdAt])
+  @@index([voteCount])
+  @@index([authorId])
   @@map("posts")
 }
 
@@ -70,6 +75,11 @@ model Comment {
   replies       Comment[]     @relation("CommentReplies")
   commentVotes  CommentVote[]
 
+  // Indexes for better performance
+  @@index([postId])
+  @@index([createdAt])
+  @@index([voteCount])
+  @@index([authorId])
   @@map("comments")
 }
 

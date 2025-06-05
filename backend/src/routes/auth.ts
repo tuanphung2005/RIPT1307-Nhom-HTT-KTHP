@@ -1,10 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { prisma } from '@/config/database';
-import { mapUserToResponse, mapToUserRole } from '@/utils/mappers';
-import { authenticateToken, requireRole, AuthRequest } from '@/middleware/auth';
-import { LoginRequest, RegisterRequest, ApiResponse, AuthResponse } from '@/types/api';
+import { prisma } from '../config/database';
+import { mapUserToResponse, mapToUserRole } from '../utils/mappers';
+import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
+import { LoginRequest, RegisterRequest, ApiResponse, AuthResponse } from '../types/api';
 
 const router = express.Router();
 
@@ -76,7 +76,7 @@ router.post('/register', async (req: express.Request, res: express.Response): Pr
       return;
     }
 
-    // Check if user already exists
+    // Check if user exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [

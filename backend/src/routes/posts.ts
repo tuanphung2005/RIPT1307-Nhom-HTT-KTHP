@@ -6,13 +6,13 @@ import type { PostsAPIRequest, CreatePostRequest, CreateCommentRequest, VoteRequ
 
 const router = Router();
 
-// Create a new post
+// New post
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { title, content, tags } = req.body;
     const userId = req.user!.id;
 
-    // Validate required fields
+    // check
     if (!title || !content) {
       return res.status(400).json({
         success: false,
@@ -20,7 +20,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Get user info for denormalized fields
+    // Get user info + denormalized fields
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });
@@ -32,7 +32,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Create the post
+    // Create post
     const post = await prisma.post.create({
       data: {
         title,
@@ -57,19 +57,9 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
           }
         }
       }
-    });
-
-    // Get vote counts
-    const upvotes = await prisma.postVote.count({
-      where: { postId: post.id, type: 'UPVOTE' }
-    });
-    const downvotes = await prisma.postVote.count({
-      where: { postId: post.id, type: 'DOWNVOTE' }
-    });
-
-    return res.status(201).json({
+    });    return res.status(201).json({
       success: true,
-      data: mapPostToResponse(post, upvotes - downvotes),
+      data: mapPostToResponse(post, post.voteCount),
       message: 'Post created successfully'
     });
   } catch (error) {
@@ -81,14 +71,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Get all posts with pagination
+// Get all posts
 router.get('/', async (req: PostsAPIRequest, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
 
-    // Get posts with pagination
+    // pagination
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
         skip: offset,
@@ -111,20 +101,8 @@ router.get('/', async (req: PostsAPIRequest, res: Response) => {
         }
       }),
       prisma.post.count()
-    ]);
-
-    // Get vote counts for each post
-    const postsWithVotes = await Promise.all(
-      posts.map(async (post) => {
-        const upvotes = await prisma.postVote.count({
-          where: { postId: post.id, type: 'UPVOTE' }
-        });
-        const downvotes = await prisma.postVote.count({
-          where: { postId: post.id, type: 'DOWNVOTE' }
-        });
-        return mapPostToResponse(post, upvotes - downvotes);
-      })
-    );
+    ]);    // Get posts + pagination + map format
+    const postsWithVotes = posts.map(post => mapPostToResponse(post, post.voteCount));
 
     return res.json({
       success: true,
@@ -146,21 +124,46 @@ router.get('/', async (req: PostsAPIRequest, res: Response) => {
 router.get('/search', async (req: Request, res: Response) => {
   try {
     const { keyword = '', tags = '', sortBy = 'newest' } = req.query;
-    const tagsArray = tags ? (tags as string).split(',') : [];
+    const tagsArray = tags ? (tags as string).split(',').map(tag => tag.trim()) : [];
 
-    // Build where clause for search
+
     const where: any = {};
-      if (keyword) {
+    
+    // keyword search
+    if (keyword) {
       where.OR = [
         { title: { contains: keyword as string } },
         { content: { contains: keyword as string } }
       ];
     }
 
+    // Add tag filtering
+    if (tagsArray.length > 0) {
+      // JSON_CONTAINS
+      const tagConditions = tagsArray.map(tag => ({
+        tags: {
+          string_contains: `"${tag}"`
+        }
+      }));
+      
+      // existing
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: tagConditions }
+        ];
+        delete where.OR;
+      } else {
+        where.OR = tagConditions;
+      }
+    }
+
     // Order by clause
     let orderBy: any = { createdAt: 'desc' }; // default newest
     if (sortBy === 'oldest') {
       orderBy = { createdAt: 'asc' };
+    } else if (sortBy === 'most_votes') {
+      orderBy = { voteCount: 'desc' };
     }
 
     const posts = await prisma.post.findMany({
@@ -183,36 +186,8 @@ router.get('/search', async (req: Request, res: Response) => {
       }
     });
 
-    // Filter by tags if provided (since tags are stored as JSON string)
-    let filteredPosts = posts;
-    if (tagsArray.length > 0) {
-      filteredPosts = posts.filter(post => {
-        try {
-          const postTags = JSON.parse(post.tags as string);
-          return tagsArray.some(tag => postTags.includes(tag));
-        } catch {
-          return false;
-        }
-      });
-    }
-
-    // Get vote counts for each post
-    const postsWithVotes = await Promise.all(
-      filteredPosts.map(async (post) => {
-        const upvotes = await prisma.postVote.count({
-          where: { postId: post.id, type: 'UPVOTE' }
-        });
-        const downvotes = await prisma.postVote.count({
-          where: { postId: post.id, type: 'DOWNVOTE' }
-        });
-        return mapPostToResponse(post, upvotes - downvotes);
-      })
-    );
-
-    // Sort by votes if requested
-    if (sortBy === 'most_votes') {
-      postsWithVotes.sort((a, b) => b.votes - a.votes);
-    }
+    // Map posts => response format using the denormalized voteCount
+    const postsWithVotes = posts.map(post => mapPostToResponse(post, post.voteCount));
 
     return res.json({
       success: true,
@@ -228,7 +203,7 @@ router.get('/search', async (req: Request, res: Response) => {
   }
 });
 
-// Get a specific post by ID
+// get post by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const postId = req.params.id;
@@ -257,19 +232,9 @@ router.get('/:id', async (req: Request, res: Response) => {
         success: false,
         message: 'Post not found'
       });
-    }
-
-    // Get vote counts
-    const upvotes = await prisma.postVote.count({
-      where: { postId: post.id, type: 'UPVOTE' }
-    });
-    const downvotes = await prisma.postVote.count({
-      where: { postId: post.id, type: 'DOWNVOTE' }
-    });
-
-    return res.json({
+    }    return res.json({
       success: true,
-      data: mapPostToResponse(post, upvotes - downvotes)
+      data: mapPostToResponse(post, post.voteCount)
     });
   } catch (error) {
     console.error('Error getting post:', error);
@@ -280,12 +245,12 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Delete a post (admin only)
+// Delete a post (admin)
 router.delete('/:id', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res: Response) => {
   try {
     const postId = req.params.id;
 
-    // Check if post exists
+    // Check
     const existingPost = await prisma.post.findUnique({
       where: { id: postId }
     });
@@ -297,7 +262,7 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), async (req: Aut
       });
     }
 
-    // Delete related votes and comments first
+    // Delete votes and truoc
     await prisma.postVote.deleteMany({
       where: { postId }
     });
@@ -314,7 +279,7 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), async (req: Aut
       where: { postId }
     });
 
-    // Delete the post
+    // Delete post
     await prisma.post.delete({
       where: { id: postId }
     });
@@ -332,14 +297,14 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), async (req: Aut
   }
 });
 
-// Create a comment on a post
+// Create comment on post
 router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const postId = req.params.id;
     const { content, parentCommentId } = req.body;
     const userId = req.user!.id;
 
-    // Validate required fields
+    // check du fields
     if (!content) {
       return res.status(400).json({
         success: false,
@@ -347,7 +312,7 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
       });
     }
 
-    // Check if post exists
+    // Check post
     const post = await prisma.post.findUnique({
       where: { id: postId }
     });
@@ -359,7 +324,7 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
       });
     }
 
-    // Get user info for denormalized fields
+    // Get user info => denormalized fields
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });
@@ -371,7 +336,7 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
       });
     }
 
-    // If parentCommentId is provided, check if it exists
+    // parentCommentId check ton tai
     if (parentCommentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: parentCommentId }
@@ -385,7 +350,7 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
       }
     }
 
-    // Create the comment
+    // tao comment
     const comment = await prisma.comment.create({
       data: {
         content,
@@ -404,11 +369,9 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
           }
         }
       }
-    });
-
-    return res.status(201).json({
+    });    return res.status(201).json({
       success: true,
-      data: mapCommentToResponse(comment, 0),
+      data: mapCommentToResponse(comment, comment.voteCount),
       message: 'Comment created successfully'
     });
   } catch (error) {
@@ -420,12 +383,12 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
   }
 });
 
-// Get comments for a post
+// get comment 1 post
 router.get('/:id/comments', async (req: Request, res: Response) => {
   try {
     const postId = req.params.id;
 
-    // Check if post exists
+    // post ton tai k?
     const post = await prisma.post.findUnique({
       where: { id: postId }
     });
@@ -449,20 +412,8 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
           }
         }
       }
-    });
-
-    // Get vote counts for each comment
-    const commentsWithVotes = await Promise.all(
-      comments.map(async (comment) => {
-        const upvotes = await prisma.commentVote.count({
-          where: { commentId: comment.id, type: 'UPVOTE' }
-        });
-        const downvotes = await prisma.commentVote.count({
-          where: { commentId: comment.id, type: 'DOWNVOTE' }
-        });
-        return mapCommentToResponse(comment, upvotes - downvotes);
-      })
-    );
+    });    // mapp comment thanh votecount dung denormalized
+    const commentsWithVotes = comments.map(comment => mapCommentToResponse(comment, comment.voteCount));
 
     return res.json({
       success: true,
@@ -478,14 +429,14 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
   }
 });
 
-// Vote on a post
+// Vote post
 router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const postId = req.params.id;
     const { type } = req.body; // 'upvote', 'downvote', or 'remove'
     const userId = req.user!.id;
 
-    // Check if post exists
+    // Check
     const post = await prisma.post.findUnique({
       where: { id: postId }
     });
@@ -497,7 +448,7 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
       });
     }
 
-    // Check if user has already voted
+    // Check if user has already chua?
     const existingVote = await prisma.postVote.findUnique({
       where: {
         postId_userId: {
@@ -505,58 +456,89 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
           postId
         }
       }
-    });
-
-    if (type === 'remove') {
-      // Remove existing vote
+    });    if (type === 'remove') {
+      // xoa vote
       if (existingVote) {
-        await prisma.postVote.delete({
-          where: {
-            postId_userId: {
-              userId,
-              postId
+        const voteValue = existingVote.type === 'UPVOTE' ? -1 : 1;
+        
+        await prisma.$transaction([
+          prisma.postVote.delete({
+            where: {
+              postId_userId: {
+                userId,
+                postId
+              }
             }
-          }
-        });
+          }),
+          prisma.post.update({
+            where: { id: postId },
+            data: {
+              voteCount: {
+                increment: voteValue
+              }
+            }
+          })
+        ]);
       }
     } else {
       const voteType = type === 'upvote' ? 'UPVOTE' : 'DOWNVOTE';
+      const voteValue = voteType === 'UPVOTE' ? 1 : -1;
       
       if (existingVote) {
-        // Update existing vote
-        await prisma.postVote.update({
-          where: {
-            postId_userId: {
-              userId,
-              postId
+        // update vote / diff
+        const oldVoteValue = existingVote.type === 'UPVOTE' ? -1 : 1;
+        const voteChange = voteValue - oldVoteValue;
+        
+        await prisma.$transaction([
+          prisma.postVote.update({
+            where: {
+              postId_userId: {
+                userId,
+                postId
+              }
+            },
+            data: { type: voteType }
+          }),
+          prisma.post.update({
+            where: { id: postId },
+            data: {
+              voteCount: {
+                increment: voteChange
+              }
             }
-          },
-          data: { type: voteType }
-        });
+          })
+        ]);
       } else {
-        // Create new vote
-        await prisma.postVote.create({
-          data: {
-            userId,
-            postId,
-            type: voteType
-          }
-        });
+        // new vote
+        await prisma.$transaction([
+          prisma.postVote.create({
+            data: {
+              userId,
+              postId,
+              type: voteType
+            }
+          }),
+          prisma.post.update({
+            where: { id: postId },
+            data: {
+              voteCount: {
+                increment: voteValue
+              }
+            }
+          })
+        ]);
       }
     }
 
-    // Calculate new vote count
-    const upvotes = await prisma.postVote.count({
-      where: { postId, type: 'UPVOTE' }
+    // update vote
+    const updatedPost = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { voteCount: true }
     });
-    const downvotes = await prisma.postVote.count({
-      where: { postId, type: 'DOWNVOTE' }
-    });
-    const votes = upvotes - downvotes;
 
     return res.json({
       success: true,
-      votes
+      votes: updatedPost?.voteCount || 0
     });
   } catch (error) {
     console.error('Error voting on post:', error);

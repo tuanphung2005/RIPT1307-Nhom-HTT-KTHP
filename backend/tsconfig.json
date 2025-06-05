@@ -25,13 +25,12 @@
     "paths": {
       "@/*": ["src/*"]
     }
-  },
-  "include": [
-    "src/**/*",
-    "prisma/**/*"
+  },  "include": [
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "prisma/**/*"
   ]
 }
