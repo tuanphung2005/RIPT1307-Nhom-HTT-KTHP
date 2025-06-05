@@ -98,3 +98,45 @@ export interface SearchFilters {
   dateRange?: string[];
   sortBy?: 'newest' | 'oldest' | 'most_votes' | 'most_comments';
 }
+
+// Extended Request types with user context
+import { Request } from 'express';
+
+export interface AuthenticatedRequest extends Request {
+  user?: UserResponse;
+}
+
+export interface PostsAPIRequest extends Request {
+  user?: UserResponse;
+  query: {
+    page?: string;
+    limit?: string;
+    keyword?: string;
+    tags?: string;
+    sortBy?: string;
+  };
+}
+
+export interface CreatePostRequest extends Request {
+  user?: UserResponse;
+  body: {
+    title: string;
+    content: string;
+    tags: string[];
+  };
+}
+
+export interface CreateCommentRequest extends Request {
+  user?: UserResponse;
+  body: {
+    content: string;
+    parentCommentId?: string;
+  };
+}
+
+export interface VoteRequest extends Request {
+  user?: UserResponse;
+  body: {
+    type: 'upvote' | 'downvote' | 'remove';
+  };
+}
