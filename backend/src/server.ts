@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import authRoutes from '@/routes/auth';
+import postRoutes from '@/routes/posts';
+import commentRoutes from '@/routes/comments';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -22,8 +24,8 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-// app.use('/api/posts', postRoutes);
-// app.use('/api/comments', commentRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/comments', commentRoutes);
 // app.use('/api/users', userRoutes);
 
 // Error handling middleware

@@ -45,22 +45,40 @@ export function mapUserToResponse(user: User): UserResponse {
 // Map Post model to PostResponse
 export function mapPostToResponse(
   post: Post & { 
-    postVotes?: Array<{ userId: string; type: string }>;
-  }
+    author?: {
+      id: string;
+      fullName: string;
+      role: UserRole;
+    };
+    _count?: {
+      comments: number;
+      postVotes: number;
+    };
+  },
+  votes: number = 0
 ): PostResponse {
-  const upvotedBy = post.postVotes?.filter(v => v.type === 'UPVOTE').map(v => v.userId) || [];
-  const downvotedBy = post.postVotes?.filter(v => v.type === 'DOWNVOTE').map(v => v.userId) || [];
+  let tags: string[] = [];
+  try {
+    if (typeof post.tags === 'string') {
+      tags = JSON.parse(post.tags);
+    } else if (Array.isArray(post.tags)) {
+      tags = post.tags as string[];
+    }
+  } catch (error) {
+    tags = [];
+  }
+
   return {
     id: post.id,
     title: post.title,
     content: post.content,
-    tags: Array.isArray(post.tags) ? (post.tags as string[]) : [],
+    tags,
     authorId: post.authorId,
-    authorName: post.authorName,
-    authorRole: mapUserRole(post.authorRole),
-    votes: post.voteCount,
-    upvotedBy,
-    downvotedBy,
+    authorName: post.author?.fullName || post.authorName,
+    authorRole: post.author ? mapUserRole(post.author.role) : mapUserRole(post.authorRole),
+    votes,
+    upvotedBy: [], // Will be populated by the API route
+    downvotedBy: [], // Will be populated by the API route
     createdAt: post.createdAt.toISOString(),
     updatedAt: post.updatedAt.toISOString(),
   };
@@ -69,23 +87,25 @@ export function mapPostToResponse(
 // Map Comment model to CommentResponse
 export function mapCommentToResponse(
   comment: Comment & {
-    commentVotes?: Array<{ userId: string; type: string }>;
-  }
+    author?: {
+      id: string;
+      fullName: string;
+      role: UserRole;
+    };
+  },
+  votes: number = 0
 ): CommentResponse {
-  const upvotedBy = comment.commentVotes?.filter(v => v.type === 'UPVOTE').map(v => v.userId) || [];
-  const downvotedBy = comment.commentVotes?.filter(v => v.type === 'DOWNVOTE').map(v => v.userId) || [];
-
   return {
     id: comment.id,
     content: comment.content,
     postId: comment.postId,
     authorId: comment.authorId,
-    authorName: comment.authorName,
-    authorRole: mapUserRole(comment.authorRole),
+    authorName: comment.author?.fullName || comment.authorName,
+    authorRole: comment.author ? mapUserRole(comment.author.role) : mapUserRole(comment.authorRole),
     parentCommentId: comment.parentCommentId || undefined,
-    votes: comment.voteCount,
-    upvotedBy,
-    downvotedBy,
+    votes,
+    upvotedBy: [], // Will be populated by the API route
+    downvotedBy: [], // Will be populated by the API route
     createdAt: comment.createdAt.toISOString(),
     updatedAt: comment.updatedAt.toISOString(),
   };
