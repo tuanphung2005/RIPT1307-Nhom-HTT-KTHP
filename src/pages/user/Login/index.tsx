@@ -14,11 +14,10 @@ const Login: React.FC = () => {
 	const [type, setType] = useState<string>('login');
 	const { setInitialState } = useModel('@@initialState');
 	const [loginForm] = Form.useForm();
-	const [registerForm] = Form.useForm();
-	const handleLogin = async (values: LoginCredentials) => {
+	const [registerForm] = Form.useForm();	const handleLogin = async (values: LoginCredentials) => {
 		setSubmitting(true);
 		try {
-			const response = authService.login(values);
+			const response = await authService.login(values);
 			
 			if (response.success && response.user) {
 				// state => user
@@ -47,7 +46,7 @@ const Login: React.FC = () => {
 	const handleRegister = async (values: RegisterData) => {
 		setSubmitting(true);
 		try {
-			const response = authService.register(values);
+			const response = await authService.register(values);
 			
 			if (response.success) {
 				message.success(response.message);
@@ -89,21 +88,20 @@ const Login: React.FC = () => {
 							<Tabs.TabPane key='register' tab='Đăng ký' />
 						</Tabs>
 
-						{type === 'login' ? (
-							<Form
+						{type === 'login' ? (							<Form
 								form={loginForm}
 								onFinish={handleLogin}
 								layout='vertical'
 								size='large'
 							>
 								<Form.Item 
-									name='username' 
-									rules={[...rules.required]}
-									label="Tên đăng nhập"
+									name='email' 
+									rules={[...rules.required, ...rules.email]}
+									label="Email"
 								>
 									<Input
-										placeholder='Nhập tên đăng nhập'
-										prefix={<UserOutlined style={{ color: '#1890ff' }} />}
+										placeholder='Nhập địa chỉ email'
+										prefix={<MailOutlined style={{ color: '#1890ff' }} />}
 									/>
 								</Form.Item>
 								
@@ -129,11 +127,10 @@ const Login: React.FC = () => {
 									>
 										Đăng nhập
 									</Button>
-								</Form.Item>
-
-								<div style={{ textAlign: 'center', marginTop: 16 }}>
+								</Form.Item>								<div style={{ textAlign: 'center', marginTop: 16 }}>
 									<small style={{ color: '#666' }}>
-										💡 Demo: Đăng nhập với <strong>admin</strong> (bất kỳ mật khẩu nào)
+										<strong>Test:</strong> admin@university.edu, teacher@university.edu, student@university.edu<br/>
+										<span style={{ color: '#999' }}>Password: admin123, teacher123, student123</span>
 									</small>
 								</div>
 							</Form>

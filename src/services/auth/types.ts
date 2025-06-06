@@ -11,7 +11,7 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;  // user => email
   password: string;
 }
 
@@ -26,5 +26,6 @@ export interface RegisterData {
 export interface AuthResponse {
   success: boolean;
   user?: User;
+  token?: string;
   message?: string;
 }
