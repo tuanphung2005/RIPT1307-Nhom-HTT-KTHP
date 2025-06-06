@@ -5,22 +5,22 @@ import { API_CONFIG } from '../api/config';
 const CURRENT_USER_KEY = 'forum_current_user';
 const TOKEN_KEY = 'forum_token';
 
-class AuthService {
-  // Register user
+class AuthService {  // Register user
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
       const response = await backendApiService.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, data);
       
-      if (response.success && response.token && response.user) {
+      // Backend returns data in { success, message, data: { user, token } } format
+      if (response.success && response.data?.token && response.data?.user) {
         // token + data
-        localStorage.setItem(TOKEN_KEY, response.token);
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.user));
+        localStorage.setItem(TOKEN_KEY, response.data.token);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.data.user));
       }
       
       return {
         success: response.success,
-        user: response.user,
-        token: response.token,
+        user: response.data?.user,
+        token: response.data?.token,
         message: response.message || 'Đăng ký thành công!'
       };
     } catch (error: any) {
@@ -31,22 +31,22 @@ class AuthService {
       };
     }
   }
-
   // Login user
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const response = await backendApiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, credentials);
       
-      if (response.success && response.token && response.user) {
+      // { success, message, data: { user, token } } format
+      if (response.success && response.data?.token && response.data?.user) {
         // Save token + user data
-        localStorage.setItem(TOKEN_KEY, response.token);
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.user));
+        localStorage.setItem(TOKEN_KEY, response.data.token);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.data.user));
       }
       
       return {
         success: response.success,
-        user: response.user,
-        token: response.token,
+        user: response.data?.user,
+        token: response.data?.token,
         message: response.message || 'Đăng nhập thành công!'
       };
     } catch (error: any) {
@@ -68,7 +68,6 @@ class AuthService {
       return null;
     }
   }
-
   // get user tu backend
   async getCurrentUserFromBackend(): Promise<User | null> {
     try {
@@ -79,10 +78,11 @@ class AuthService {
 
       const response = await backendApiService.get(API_CONFIG.ENDPOINTS.AUTH.ME);
       
-      if (response.success && response.user) {
+      // Backend returns data in { success, message, data: { user } } format
+      if (response.success && response.data?.user) {
         // update local data
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.user));
-        return response.user;
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.data.user));
+        return response.data.user;
       }
       
       return null;
