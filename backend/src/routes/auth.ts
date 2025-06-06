@@ -19,19 +19,25 @@ router.post('/login', async (req: express.Request, res: express.Response): Promi
         message: 'Email and password are required'
       });
       return;
-    }
-
-    const user = await prisma.user.findUnique({
+    }    const user = await prisma.user.findUnique({
       where: { email }
     });
 
-    if (!user || !user.isActive) {
+    if (!user) {
       res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
       return;
-    }    const isPasswordValid = await bcrypt.compare(password, user.password);
+    }
+
+    if (!user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact the administrator for assistance.'
+      });
+      return;
+    }const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       res.status(401).json({
         success: false,

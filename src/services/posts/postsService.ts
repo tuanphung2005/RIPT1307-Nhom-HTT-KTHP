@@ -272,6 +272,38 @@ class PostsService {
     }
   }
 
+  // Update post
+  async updatePost(postId: string, data: CreatePostData): Promise<PostResponse> {
+    try {
+      const currentUser = authService.getCurrentUser();
+      
+      if (!currentUser) {
+        return {
+          success: false,
+          message: 'Bạn cần đăng nhập để cập nhật bài đăng'
+        };
+      }
+
+      const response = await backendApiService.put(API_CONFIG.ENDPOINTS.POSTS.UPDATE(postId), {
+        title: data.title,
+        content: data.content,
+        tags: data.tags || []
+      });
+
+      return {
+        success: response.success,
+        data: response.data,
+        message: response.message || 'Cập nhật bài đăng thành công!'
+      };
+    } catch (error: any) {
+      console.error('Error updating post:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật bài đăng'
+      };
+    }
+  }
+
 // backward compatible
   migrateExistingData(): void {
     // TODO: REMoVE THIS

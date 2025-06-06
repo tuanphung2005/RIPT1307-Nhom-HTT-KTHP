@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth';
 import postRoutes from './routes/posts';
 import commentRoutes from './routes/comments';
+import userRoutes from './routes/users';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -26,7 +27,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
-// app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -64,7 +65,7 @@ async function startServer() {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\nShutting down gracefully...');
+  console.log('\nShutting down...');
   await prisma.$disconnect();
   process.exit(0);
 });

@@ -10,7 +10,7 @@ class AuthService {  // Register user
     try {
       const response = await backendApiService.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, data);
       
-      // Backend returns data in { success, message, data: { user, token } } format
+      // { success, message, data: { user, token } } format
       if (response.success && response.data?.token && response.data?.user) {
         // token + data
         localStorage.setItem(TOKEN_KEY, response.data.token);

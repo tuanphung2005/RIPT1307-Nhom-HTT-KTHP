@@ -11,23 +11,32 @@ export const API_CONFIG = {
       REGISTER: '/auth/register',
       ME: '/auth/me',
     },
-    
-    // Posts endpoints
+      // Posts endpoints
     POSTS: {
       LIST: '/posts',
       CREATE: '/posts',
       GET_BY_ID: (id: string) => `/posts/${id}`,
+      UPDATE: (id: string) => `/posts/${id}`,
       DELETE: (id: string) => `/posts/${id}`,
       SEARCH: '/posts/search',
       VOTE: (id: string) => `/posts/${id}/vote`,
       COMMENTS: (id: string) => `/posts/${id}/comments`,
     },
-    
-    // Comments endpoints
+      // Comments endpoints
     COMMENTS: {
       VOTE: (id: string) => `/comments/${id}/vote`,
     },
-      // Health check
+      // Users endpoints (admin only)
+    USERS: {
+      LIST: '/users',
+      CREATE: '/users',
+      UPDATE: (id: string) => `/users/${id}`,
+      DELETE: (id: string) => `/users/${id}`,
+      TOGGLE_STATUS: (id: string) => `/users/${id}/toggle-status`,
+      RESET_PASSWORD: (id: string) => `/users/${id}/reset-password`,
+    },
+    
+    // Health check
     HEALTH: '/health',
   },
   
