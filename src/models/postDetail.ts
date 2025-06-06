@@ -21,10 +21,9 @@ export default function usePostDetail() {
   const navigateToForum = () => {
     history.push('/forum');
   };
-
   // Post detail methods
   const loadPost = async (postId: string) => {
-    const response = postsService.getPostById(postId);
+    const response = await postsService.getPostById(postId);
     if (response.success && response.data) {
       setCurrentPost(response.data);
     } else {
@@ -34,7 +33,7 @@ export default function usePostDetail() {
   };
 
   const loadComments = async (postId: string) => {
-    const response = postsService.getCommentsByPostId(postId);
+    const response = await postsService.getCommentsByPostId(postId);
     if (response.success && response.data) {
       setComments(response.data);
     }
@@ -53,11 +52,10 @@ export default function usePostDetail() {
     setReplyContent('');
     setReplyingTo(null);
   };
-
   // Vote methods
   const handleVote = async (targetId: string, type: 'upvote' | 'downvote', targetType: 'post' | 'comment') => {
     try {
-      const response = postsService.vote({ targetId, type }, targetType);
+      const response = await postsService.vote({ targetId, type }, targetType);
       if (response.success) {
         // Reload data to get updated vote counts
         if (targetType === 'post' && currentPost) {
@@ -93,7 +91,7 @@ export default function usePostDetail() {
         parentCommentId: replyingTo || undefined,
       };
 
-      const response = postsService.createComment(commentData);
+      const response = await postsService.createComment(commentData);
       if (response.success) {
         setCommentContent('');
         setReplyContent('');

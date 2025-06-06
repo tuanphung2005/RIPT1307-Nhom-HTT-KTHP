@@ -24,12 +24,11 @@ export default () => {
     dateRange: [] as string[],
     sortBy: 'newest' as 'newest' | 'oldest' | 'most_votes' | 'most_comments',
   });
-
   // Posts methods
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const response = postsService.getAllPosts(1, 20);
+      const response = await postsService.getAllPosts(1, 20);
       if (response.success && response.data) {
         setPosts(response.data);
       } else {
@@ -42,12 +41,16 @@ export default () => {
     }
   };
 
-  const handleSearch = (value: string) => {
+  const handleSearch = async (value: string) => {
     setSearchKeyword(value);
     if (value.trim()) {
-      const response = postsService.searchPosts(value);
-      if (response.success && response.data) {
-        setPosts(response.data);
+      try {
+        const response = await postsService.searchPosts(value);
+        if (response.success && response.data) {
+          setPosts(response.data);
+        }
+      } catch (error) {
+        message.error('Có lỗi xảy ra khi tìm kiếm');
       }
     } else {
       loadPosts();
@@ -94,11 +97,10 @@ export default () => {
     'Học bổng',
     'Khác'
   ];
-
   const createPost = async (postData: CreatePostData) => {
     setCreatePostLoading(true);
     try {
-      const response = postsService.createPost(postData);
+      const response = await postsService.createPost(postData);
       if (response.success) {
         message.success('Bài đăng đã được tạo thành công');
         navigateToForum();
@@ -135,7 +137,6 @@ export default () => {
   const clearCreatePost = () => {
     setCreatePostContent('');
   };
-
   // Advanced search methods
   const handleAdvancedSearch = async (filters: AdvancedSearchFilters) => {
     setAdvancedSearchLoading(true);
@@ -143,65 +144,60 @@ export default () => {
       // Update search filters
       setSearchFilters(filters);
       
-      // Get all posts first
-      let posts = postsService.getAllPosts(1, 1000).data || [];
+      // Use backend search API with filters
+      const response = await postsService.searchPosts(
+        filters.keyword || '',
+        filters.tags || [],
+        1,
+        1000
+      );
       
-      // Apply filters
-      posts = posts.filter(post => {
-        // Keyword filter
-        if (filters.keyword && filters.keyword.trim()) {
-          const keyword = filters.keyword.toLowerCase();
-          const matchesKeyword = post.title.toLowerCase().includes(keyword) ||
-                                post.content.toLowerCase().includes(keyword) ||
-                                post.authorName.toLowerCase().includes(keyword);
-          if (!matchesKeyword) return false;
-        }
+      if (response.success && response.data) {
+        let posts = response.data;
         
-        // Tags filter
-        if (filters.tags && filters.tags.length > 0) {
-          const matchesTags = filters.tags.some((tag: string) => post.tags.includes(tag));
-          if (!matchesTags) return false;
-        }
-        
-        // Author role filter
-        if (filters.authorRole && filters.authorRole !== '') {
-          if (post.authorRole !== filters.authorRole) return false;
-        }
-        
-        // Date range filter
-        if (filters.dateRange && filters.dateRange.length === 2) {
-          const postDate = new Date(post.createdAt);
-          const startDate = new Date(filters.dateRange[0]);
-          const endDate = new Date(filters.dateRange[1]);
-          endDate.setHours(23, 59, 59, 999); // Include the entire end date
+        // Apply additional client-side filters that might not be supported by backend
+        posts = posts.filter((post: Post) => {
+          // Author role filter
+          if (filters.authorRole && filters.authorRole !== '') {
+            if (post.authorRole !== filters.authorRole) return false;
+          }
           
-          if (postDate < startDate || postDate > endDate) return false;
+          // Date range filter
+          if (filters.dateRange && filters.dateRange.length === 2) {
+            const postDate = new Date(post.createdAt);
+            const startDate = new Date(filters.dateRange[0]);
+            const endDate = new Date(filters.dateRange[1]);
+            endDate.setHours(23, 59, 59, 999); // Include the entire end date
+            
+            if (postDate < startDate || postDate > endDate) return false;
+          }
+          
+          return true;
+        });
+        
+        // Sort results
+        switch (filters.sortBy) {
+          case 'oldest':
+            posts.sort((a: Post, b: Post) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            break;
+          case 'most_votes':
+            posts.sort((a: Post, b: Post) => b.votes - a.votes);
+            break;
+          case 'most_comments':
+            // For now, sort by votes since we don't have comment count on posts
+            posts.sort((a: Post, b: Post) => b.votes - a.votes);
+            break;
+          case 'newest':
+          default:
+            posts.sort((a: Post, b: Post) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            break;
         }
         
-        return true;
-      });
-      
-      // Sort results
-      switch (filters.sortBy) {
-        case 'oldest':
-          posts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-          break;
-        case 'most_votes':
-          posts.sort((a, b) => b.votes - a.votes);
-          break;
-        case 'most_comments':
-          // For now, sort by votes since we don't have comment count on posts
-          // You could enhance this by adding comment count to posts
-          posts.sort((a, b) => b.votes - a.votes);
-          break;
-        case 'newest':
-        default:
-          posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          break;
+        setAdvancedSearchResults(posts);
+        message.success(`Tìm thấy ${posts.length} bài đăng`);
+      } else {
+        message.error(response.message || 'Có lỗi xảy ra khi tìm kiếm');
       }
-      
-      setAdvancedSearchResults(posts);
-      message.success(`Tìm thấy ${posts.length} bài đăng`);
     } catch (error) {
       message.error('Có lỗi xảy ra khi tìm kiếm');
     } finally {
@@ -218,34 +214,49 @@ export default () => {
       sortBy: 'newest',
     });
   };
-
   // Get all available tags from posts
-  const getAllTags = () => {
-    const allPosts = postsService.getAllPosts(1, 1000).data || [];
-    const tagsSet = new Set<string>();
-    allPosts.forEach(post => {
-      post.tags.forEach(tag => tagsSet.add(tag));
-    });
-    return Array.from(tagsSet).sort();
+  const getAllTags = async () => {
+    try {
+      const response = await postsService.getAllPosts(1, 1000);
+      if (response.success && response.data) {
+        const tagsSet = new Set<string>();
+        response.data.forEach((post: Post) => {
+          post.tags.forEach((tag: string) => tagsSet.add(tag));
+        });
+        return Array.from(tagsSet).sort();
+      }
+      return [];
+    } catch (error) {
+      console.error('Error getting tags:', error);
+      return [];
+    }
   };
 
   // Get all authors
-  const getAllAuthors = () => {
-    const allPosts = postsService.getAllPosts(1, 1000).data || [];
-    const authorsMap = new Map<string, { name: string; role: string }>();
-    allPosts.forEach(post => {
-      authorsMap.set(post.authorId, {
-        name: post.authorName,
-        role: post.authorRole
-      });
-    });
-    return Array.from(authorsMap.values());
+  const getAllAuthors = async () => {
+    try {
+      const response = await postsService.getAllPosts(1, 1000);
+      if (response.success && response.data) {
+        const authorsMap = new Map<string, { name: string; role: string }>();
+        response.data.forEach((post: Post) => {
+          authorsMap.set(post.authorId, {
+            name: post.authorName,
+            role: post.authorRole
+          });
+        });
+        return Array.from(authorsMap.values());
+      }
+      return [];
+    } catch (error) {
+      console.error('Error getting authors:', error);
+      return [];
+    }
   };
 
   // Admin methods
   const getAllPosts = async (): Promise<Post[]> => {
     try {
-      const response = postsService.getAllPosts(1, 1000);
+      const response = await postsService.getAllPosts(1, 1000);
       if (response.success && response.data) {
         return response.data;
       } else {
@@ -259,7 +270,7 @@ export default () => {
 
   const deletePost = async (postId: string): Promise<void> => {
     try {
-      const response = postsService.deletePost(postId);
+      const response = await postsService.deletePost(postId);
       if (!response.success) {
         throw new Error(response.message);
       }

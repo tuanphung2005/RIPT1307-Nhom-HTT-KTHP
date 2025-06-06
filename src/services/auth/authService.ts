@@ -1,128 +1,64 @@
 import type { User, LoginCredentials, RegisterData, AuthResponse } from './types';
+import { backendApiService } from '../api/backendApi';
+import { API_CONFIG } from '../api/config';
 
-const USERS_KEY = 'forum_users';
 const CURRENT_USER_KEY = 'forum_current_user';
+const TOKEN_KEY = 'forum_token';
 
-// test
-const DEFAULT_ADMIN: User = {
-  id: 'admin_001',
-  username: 'admin',
-  email: 'admin@forum.edu.vn',
-  fullName: 'Quản trị viên',
-  role: 'admin',
-  isActive: true,
-  createdAt: new Date().toISOString(),
-};
-
-class AuthService {
-  constructor() {
-    this.initializeDefaultData();
-  }
-
-  // init mac dinh = admin
-  private initializeDefaultData(): void {
-    const users = this.getUsers();
-    if (users.length === 0) {
-      this.saveUsers([DEFAULT_ADMIN]);
-    }
-  }  // get all tu local
-  private getUsers(): User[] {
+class AuthService {  // Register user
+  async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const users = localStorage.getItem(USERS_KEY);
-      return users ? JSON.parse(users) : [];
-    } catch (error) {
-      console.error('Error getting users from localStorage:', error);
-      return [];
-    }
-  }
-
-  // users to localStorage
-  private saveUsers(users: User[]): void {
-    try {
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    } catch (error) {
-      console.error('Error saving users to localStorage:', error);
-    }
-  }
-
-  // uuid
-  private generateId(): string {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-  }
-
-  // new user
-  register(data: RegisterData): AuthResponse {
-    try {
-      const users = this.getUsers();
+      const response = await backendApiService.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, data);
       
-      // check neu user ton tai
-      const existingUser = users.find(
-        user => user.username === data.username || user.email === data.email
-      );
-      
-      if (existingUser) {
-        return {
-          success: false,
-          message: 'Tên đăng nhập hoặc email đã tồn tại'
-        };
+      // { success, message, data: { user, token } } format
+      if (response.success && response.data?.token && response.data?.user) {
+        // token + data
+        localStorage.setItem(TOKEN_KEY, response.data.token);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.data.user));
       }
-
-      // new user
-      const newUser: User = {
-        id: this.generateId(),
-        username: data.username,
-        email: data.email,
-        fullName: data.fullName,
-        role: data.role,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
-
-      users.push(newUser);
-      this.saveUsers(users);
-
+      
       return {
-        success: true,
-        user: newUser,
-        message: 'Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.'
+        success: response.success,
+        user: response.data?.user,
+        token: response.data?.token,
+        message: response.message || 'Đăng ký thành công!'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during registration:', error);
       return {
         success: false,
-        message: 'Có lỗi xảy ra trong quá trình đăng ký'
+        message: error.response?.data?.message || 'Có lỗi xảy ra trong quá trình đăng ký'
       };
     }
-  }  // login user
-  login(credentials: LoginCredentials): AuthResponse {
+  }
+  // Login user
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const users = this.getUsers();
-      const user = users.find(
-        u => u.username === credentials.username && u.isActive
-      );
-
-      if (!user) {
-        return {
-          success: false,
-          message: 'Tên đăng nhập hoặc mật khẩu không đúng'
-        };
+      const response = await backendApiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, credentials);
+      
+      // { success, message, data: { user, token } } format
+      if (response.success && response.data?.token && response.data?.user) {
+        // Save token + user data
+        localStorage.setItem(TOKEN_KEY, response.data.token);
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.data.user));
       }
-      // current user vao localStorage
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
       
       return {
-        success: true,
-        user,
-        message: 'Đăng nhập thành công!'
+        success: response.success,
+        user: response.data?.user,
+        token: response.data?.token,
+        message: response.message || 'Đăng nhập thành công!'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during login:', error);
       return {
         success: false,
-        message: 'Có lỗi xảy ra trong quá trình đăng nhập'
+        message: error.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng'
       };
     }
-  }  // current user
+  }
+
+  // get user tu localstorage
   getCurrentUser(): User | null {
     try {
       const userData = localStorage.getItem(CURRENT_USER_KEY);
@@ -131,24 +67,81 @@ class AuthService {
       console.error('Error getting current user:', error);
       return null;
     }
-  }  // logout
+  }
+  // get user tu backend
+  async getCurrentUserFromBackend(): Promise<User | null> {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        return null;
+      }
+
+      const response = await backendApiService.get(API_CONFIG.ENDPOINTS.AUTH.ME);
+      
+      // Backend returns data in { success, message, data: { user } } format
+      if (response.success && response.data?.user) {
+        // update local data
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(response.data.user));
+        return response.data.user;
+      }
+      
+      return null;
+    } catch (error: any) {
+      console.error('Error getting current user from backend:', error);
+      
+      // sai token => clear data
+      if (error.response?.status === 401) {
+        this.logout();
+      }
+      
+      return null;
+    }
+  }
+
+  // jwt token
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  // logout
   logout(): void {
     try {
       localStorage.removeItem(CURRENT_USER_KEY);
+      localStorage.removeItem(TOKEN_KEY);
     } catch (error) {
       console.error('Error during logout:', error);
     }
   }
 
-  // check user dang auth chua?
+  // check authenticate
   isAuthenticated(): boolean {
     const user = this.getCurrentUser();
-    return user !== null;
+    const token = this.getToken();
+    return user !== null && token !== null;
   }
 
-  // all user (admin)
-  getAllUsers(): User[] {
-    return this.getUsers();
+  // Get all users (admin)
+  async getAllUsers(): Promise<User[]> {
+    try {
+      // Note: This endpoint may need to be implemented in the backend
+      // TODO ADD VAO BACKEND
+      console.warn('getAllUsers not yet implemented in backend');
+      return [];
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
+    }
+  }
+
+  // ref token
+  async refreshToken(): Promise<boolean> {
+    try {
+      const currentUser = await this.getCurrentUserFromBackend();
+      return currentUser !== null;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      return false;
+    }
   }
 }
 

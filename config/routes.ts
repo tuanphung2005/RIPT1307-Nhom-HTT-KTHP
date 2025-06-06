@@ -71,13 +71,13 @@
 		name: 'Tạo bài viết',
 		component: './Forum/CreatePost',
 		hideInMenu: true,
-	},
-	{
+	},	{
 		path: '/forum/:id',
 		name: 'Chi tiết bài viết',
 		component: './Forum/PostDetail',
 		hideInMenu: true,
 	},
+
 
 	{
 		path: '/',
