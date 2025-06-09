@@ -57,7 +57,7 @@ export default function usePostDetail() {
     try {
       const response = await postsService.vote({ targetId, type }, targetType);
       if (response.success) {
-        // Reload data to get updated vote counts
+
         if (targetType === 'post' && currentPost) {
           await loadPost(currentPost.id);
         } else {

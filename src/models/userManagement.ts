@@ -53,7 +53,7 @@ export default function useUserManagement() {
       const response = await userManagementService.updateUser(userId, values);
       if (response.success) {
         message.success(response.message || 'Cập nhật người dùng thành công');
-        // Reload users to get updated data
+
         await loadUsers();
       } else {
         message.error(response.message || 'Không thể cập nhật người dùng');
@@ -80,7 +80,7 @@ export default function useUserManagement() {
       const response = await userManagementService.deleteUser(userId);
       if (response.success) {
         message.success(response.message || 'Xóa người dùng thành công');
-        // Reload users to get updated data
+
         await loadUsers();
       } else {
         message.error(response.message || 'Không thể xóa người dùng');
@@ -94,7 +94,7 @@ export default function useUserManagement() {
       const response = await userManagementService.toggleUserStatus(userId);
       if (response.success) {
         message.success(response.message || (isActive ? 'Kích hoạt người dùng thành công' : 'Khóa người dùng thành công'));
-        // Reload users to get updated data
+
         await loadUsers();
       } else {
         message.error(response.message || 'Không thể thay đổi trạng thái người dùng');
@@ -105,8 +105,8 @@ export default function useUserManagement() {
   };
   const handleResetPassword = async (userId: string) => {
     try {
-      // Ask for new password from user in a modal/prompt - for now use a default
-      const newPassword = 'newpass123'; // This should be implemented with a proper modal
+
+      const newPassword = 'newpass123';
       const response = await userManagementService.resetUserPassword(userId, { newPassword });
       if (response.success) {
         message.success(response.message || 'Đặt lại mật khẩu thành công');

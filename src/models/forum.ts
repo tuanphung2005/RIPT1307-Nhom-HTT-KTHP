@@ -104,7 +104,7 @@ export default () => {
       if (response.success) {
         message.success('Bài đăng đã được tạo thành công');
         navigateToForum();
-        // Reload posts to show the new post
+        // Reload posts
         loadPosts();
         return true;
       } else {
@@ -155,14 +155,13 @@ export default () => {
       if (response.success && response.data) {
         let posts = response.data;
         
-        // Apply additional client-side filters that might not be supported by backend
         posts = posts.filter((post: Post) => {
-          // Author role filter
+          // Author role 
           if (filters.authorRole && filters.authorRole !== '') {
             if (post.authorRole !== filters.authorRole) return false;
           }
           
-          // Date range filter
+          // Date filter
           if (filters.dateRange && filters.dateRange.length === 2) {
             const postDate = new Date(post.createdAt);
             const startDate = new Date(filters.dateRange[0]);
@@ -184,7 +183,6 @@ export default () => {
             posts.sort((a: Post, b: Post) => b.votes - a.votes);
             break;
           case 'most_comments':
-            // For now, sort by votes since we don't have comment count on posts
             posts.sort((a: Post, b: Post) => b.votes - a.votes);
             break;
           case 'newest':
@@ -214,7 +212,7 @@ export default () => {
       sortBy: 'newest',
     });
   };
-  // Get all available tags from posts
+
   const getAllTags = async () => {
     try {
       const response = await postsService.getAllPosts(1, 1000);
@@ -232,7 +230,7 @@ export default () => {
     }
   };
 
-  // Get all authors
+
   const getAllAuthors = async () => {
     try {
       const response = await postsService.getAllPosts(1, 1000);
@@ -280,7 +278,7 @@ export default () => {
     }
   };
 
-  // Utility methods (shared across forum components)
+  // Utility
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':

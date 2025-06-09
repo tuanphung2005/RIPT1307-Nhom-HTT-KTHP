@@ -1,8 +1,17 @@
+export const FORUM_CONFIG = {
+  // API URLs
+  API_BASE_URL: process.env.REACT_APP_FORUM_API_BASE_URL || 'http://localhost:3001/api',
+  BACKEND_URL: process.env.REACT_APP_FORUM_BACKEND_URL || 'http://localhost:3001',
+  FRONTEND_URL: process.env.REACT_APP_FORUM_FRONTEND_URL || 'http://localhost:8000',
+  WS_URL: process.env.REACT_APP_FORUM_WS_URL || 'ws://localhost:3001',
+  
+  // Environment info
+  IS_PRODUCTION: process.env.NODE_ENV === 'production',
+  IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
+};
 
 export const API_CONFIG = {
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://production.com/api' 
-    : 'http://localhost:3001/api',
+  BASE_URL: FORUM_CONFIG.API_BASE_URL,
   
   ENDPOINTS: {
     // Auth endpoints
@@ -61,4 +70,28 @@ export const getAuthHeaders = (): Record<string, string> => {
     ...API_CONFIG.HEADERS,
     ...(token && { Authorization: `Bearer ${token}` }),
   };
+};
+
+// Development helper to log current configuration
+export const logCurrentConfig = (): void => {
+  if (FORUM_CONFIG.IS_DEVELOPMENT) {
+    console.group('🔧 Forum API Configuration');
+    console.log('🌐 API Base URL:', FORUM_CONFIG.API_BASE_URL);
+    console.log('🖥️ Backend URL:', FORUM_CONFIG.BACKEND_URL);
+    console.log('💻 Frontend URL:', FORUM_CONFIG.FRONTEND_URL);
+    console.log('🔌 WebSocket URL:', FORUM_CONFIG.WS_URL);
+    console.log('🏗️ Environment:', process.env.NODE_ENV);
+    console.groupEnd();
+  }
+};
+
+// Health check helper
+export const testApiConnection = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${FORUM_CONFIG.API_BASE_URL}/health`);
+    return response.ok;
+  } catch (error) {
+    console.error('❌ API connection test failed:', error);
+    return false;
+  }
 };
