@@ -46,7 +46,7 @@ export interface MarkReadResponse {
   message?: string;
 }
 
-class NotificationService {  // Get notifications with pagination
+class NotificationService {
   async getNotifications(page: number = 1, limit: number = 20): Promise<NotificationsResponse> {
 
     try {
@@ -71,11 +71,11 @@ class NotificationService {  // Get notifications with pagination
       
 
       
-      // Handle both wrapped and direct response formats
+
       const responseData = response.data || response;
       
       return {
-        success: response.success || true, // If we got here, assume success unless explicitly false
+        success: response.success || true, 
         notifications: responseData.notifications || [],
         unreadCount: responseData.unreadCount || 0,
         page: responseData.page || page,
@@ -84,15 +84,14 @@ class NotificationService {  // Get notifications with pagination
         message: response.message
       };
     } catch (error: any) {
-     
-      // Don't show error for authentication issues
+
       if (error.response?.status === 401) {
        
         return {
           success: false,
           notifications: [],
           unreadCount: 0,
-          message: undefined // Silent fail for auth issues
+          message: undefined // Silent fail
         };
       }
       return {
@@ -106,7 +105,7 @@ class NotificationService {  // Get notifications with pagination
   // Get unread count
   async getUnreadCount(): Promise<UnreadCountResponse> {
     try {
-      // Check authentication first
+
       if (!authService.isAuthenticated()) {
         return {
           success: false,
@@ -115,11 +114,10 @@ class NotificationService {  // Get notifications with pagination
         };
       }      const response = await backendApiService.get(API_CONFIG.ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
       
-      // Handle both wrapped and direct response formats
       const responseData = response.data || response;
       
       return {
-        success: response.success || true, // If we got here, assume success unless explicitly false
+        success: response.success || true,
         unreadCount: responseData.unreadCount || 0,
         message: response.message
       };
@@ -130,7 +128,7 @@ class NotificationService {  // Get notifications with pagination
         return {
           success: false,
           unreadCount: 0,
-          message: undefined // Silent fail for auth issues
+          message: undefined
         };
       }
       return {

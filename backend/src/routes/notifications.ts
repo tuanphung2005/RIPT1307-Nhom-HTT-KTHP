@@ -23,23 +23,22 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = (page - 1) * limit;
     
-    console.log('🔔 Backend: Getting notifications for user:', userId, `(page: ${page}, limit: ${limit})`);
+    
     
     // Get user info for debugging
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { username: true, fullName: true, role: true }
     });
-    console.log('🔔 Backend: User details:', user);
+
     
     const notifications = await NotificationService.getUserNotifications(userId, limit, offset);
-    console.log('🔔 Backend: Found notifications:', notifications?.length || 0);
+
     if (notifications && notifications.length > 0) {
-      console.log('🔔 Backend: First notification:', notifications[0]);
+
     }
     
     const unreadCount = await NotificationService.getUnreadCount(userId);
-    console.log('🔔 Backend: Unread count:', unreadCount);
 
     res.json({
       success: true,

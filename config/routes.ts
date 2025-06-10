@@ -72,6 +72,13 @@
 		hideInMenu: true,
 	},
 
+	// CHAT ROUTES
+	{
+		path: '/chat',
+		name: 'Chat toàn cầu',
+		component: './Chat/GlobalChat',
+		icon: 'WechatOutlined',
+	},
 
 	{
 		path: '/',

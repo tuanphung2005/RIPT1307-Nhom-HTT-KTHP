@@ -603,9 +603,9 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
     // Send notification for post upvotes (only for new upvotes, not removes or updates)
     try {
       if (type === 'upvote' && (!existingVote || existingVote.type !== 'UPVOTE')) {
-        console.log(`🔔 About to send post upvote notification for post: ${postId}, voter: ${userId}`);
+      
         await NotificationService.notifyPostUpvoted(postId, userId);
-        console.log(`🔔 Post upvote notification sent successfully`);
+
       }
     } catch (notificationError) {
       console.error('🔔 Error creating post upvote notification:', notificationError);

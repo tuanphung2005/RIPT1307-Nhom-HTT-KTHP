@@ -39,13 +39,12 @@ export default function useNotifications() {
         setCurrentPage(page);
       } else {
 
-        // Only show error message if there is one and it's not an auth issue
         if (response.message) {
           message.error(response.message);
         }
       }
     } catch (error) {
-      // Only show error for non-authentication issues
+
       if (error.response?.status !== 401) {
         message.error('Có lỗi xảy ra khi tải thông báo');
       }
@@ -151,10 +150,10 @@ export default function useNotifications() {
     } else {
       return notificationTime.toLocaleDateString('vi-VN');
     }
-  };  // Initialize notifications on mount
+  }; 
   useEffect(() => {
 
-    // Only load notifications if user is authenticated
+
     if (authService.isAuthenticated() || initialState?.currentUser) {
 
       loadNotifications();
@@ -163,9 +162,9 @@ export default function useNotifications() {
     }
   }, [initialState?.currentUser]);
 
-  // Set up polling for unread count (every 30 seconds)
+
   useEffect(() => {
-    // Only set up polling if user is authenticated
+
     if (authService.isAuthenticated() || initialState?.currentUser) {
       const interval = setInterval(loadUnreadCount, 30000);
       return () => clearInterval(interval);

@@ -43,13 +43,18 @@ export const API_CONFIG = {
       TOGGLE_STATUS: (id: string) => `/users/${id}/toggle-status`,
       RESET_PASSWORD: (id: string) => `/users/${id}/reset-password`,
     },
-    
-    // Notifications endpoints
+      // Notifications endpoints
     NOTIFICATIONS: {
       LIST: '/notifications',
       UNREAD_COUNT: '/notifications/unread-count',
       MARK_READ: (id: string) => `/notifications/${id}/read`,
       MARK_ALL_READ: '/notifications/read-all',
+    },
+    
+    // Chat endpoints
+    CHAT: {
+      MESSAGES: '/chat',
+      SEND: '/chat',
     },
     
     // Health check

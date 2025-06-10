@@ -24,6 +24,7 @@ model User {
   notifications        Notification[]
   postVotes            PostVote[]
   posts                Post[]
+  chatMessages         ChatMessage[]
 
   @@map("users")
 }
@@ -124,6 +125,20 @@ model Notification {
   @@index([authorId], map: "notifications_authorId_fkey")
   @@index([postId], map: "notifications_postId_fkey")
   @@map("notifications")
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  authorId   String
+  authorName String
+  authorRole UserRole
+  createdAt  DateTime @default(now())
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([authorId])
+  @@map("chat_messages")
 }
 
 enum UserRole {
