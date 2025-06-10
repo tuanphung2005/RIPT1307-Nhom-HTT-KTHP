@@ -34,8 +34,7 @@ export const API_CONFIG = {
       // Comments endpoints
     COMMENTS: {
       VOTE: (id: string) => `/comments/${id}/vote`,
-    },
-      // Users endpoints (admin only)
+    },    // Users endpoints (admin only)
     USERS: {
       LIST: '/users',
       CREATE: '/users',
@@ -43,6 +42,14 @@ export const API_CONFIG = {
       DELETE: (id: string) => `/users/${id}`,
       TOGGLE_STATUS: (id: string) => `/users/${id}/toggle-status`,
       RESET_PASSWORD: (id: string) => `/users/${id}/reset-password`,
+    },
+    
+    // Notifications endpoints
+    NOTIFICATIONS: {
+      LIST: '/notifications',
+      UNREAD_COUNT: '/notifications/unread-count',
+      MARK_READ: (id: string) => `/notifications/${id}/read`,
+      MARK_ALL_READ: '/notifications/read-all',
     },
     
     // Health check

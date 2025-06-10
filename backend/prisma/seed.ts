@@ -50,13 +50,12 @@ async function main() {
       avatar: 'https://ui-avatars.com/api/?name=Tran+Thi+B&background=52c41a&color=fff'
     }
   });
-
   // Create sample posts
   const post1 = await prisma.post.create({
     data: {
       title: 'Chào mừng đến với diễn đàn trường đại học',
       content: '<p>Đây là bài đăng đầu tiên trên diễn đàn. Hãy tham gia thảo luận và chia sẻ kiến thức!</p>',
-      tags: ['Thông báo', 'Chào mừng'],
+      tags: JSON.stringify(['Thông báo', 'Chào mừng']),
       authorId: admin.id,
       authorName: admin.fullName,
       authorRole: admin.role,
@@ -67,7 +66,7 @@ async function main() {
     data: {
       title: 'Hướng dẫn sử dụng diễn đàn hiệu quả',
       content: '<p>Bài viết này sẽ hướng dẫn các bạn cách sử dụng diễn đàn một cách hiệu quả nhất.</p>',
-      tags: ['Hướng dẫn', 'Giáo dục'],
+      tags: JSON.stringify(['Hướng dẫn', 'Giáo dục']),
       authorId: teacher.id,
       authorName: teacher.fullName,
       authorRole: teacher.role,

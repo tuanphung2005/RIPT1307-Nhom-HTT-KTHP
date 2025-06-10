@@ -100,6 +100,38 @@ export interface SearchFilters {
   sortBy?: 'newest' | 'oldest' | 'most_votes' | 'most_comments';
 }
 
+// Notification types
+export interface NotificationResponse {
+  id: string;
+  userId: string;
+  type: 'COMMENT_ON_POST' | 'REPLY_TO_COMMENT';
+  title: string;
+  message: string;
+  isRead: boolean;
+  postId?: string;
+  commentId?: string;
+  authorId?: string;
+  author?: {
+    id: string;
+    username: string;
+    fullName: string;
+    avatar?: string;
+  };
+  post?: {
+    id: string;
+    title: string;
+  };
+  createdAt: string;
+}
+
+export interface NotificationsListResponse {
+  notifications: NotificationResponse[];
+  unreadCount: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
 // user context
 import { Request } from 'express';
 

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/database';
 import { mapPostToResponse, mapCommentToResponse } from '../utils/mappers';
+import { NotificationService } from '../services/notificationService';
 import type { PostsAPIRequest, CreatePostRequest, CreateCommentRequest, VoteRequest } from '../types/api';
 
 const router = Router();
@@ -360,8 +361,7 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
         authorRole: user.role,
         parentCommentId: parentCommentId || null,
       },
-      include: {
-        author: {
+      include: {        author: {
           select: {
             id: true,
             fullName: true,
@@ -369,7 +369,23 @@ router.post('/:id/comments', authenticateToken, async (req: AuthRequest, res: Re
           }
         }
       }
-    });    return res.status(201).json({
+    });
+
+    // Trigger notifications after comment creation
+    try {
+      if (parentCommentId) {
+        // This is a reply to a comment - notify the parent comment author
+        await NotificationService.notifyCommentReplied(parentCommentId, userId, comment.id);
+      } else {
+        // This is a comment on a post - notify the post author
+        await NotificationService.notifyPostCommented(postId, userId, comment.id);
+      }
+    } catch (notificationError) {
+      // Log notification errors but don't fail the comment creation
+      console.error('Error creating notification:', notificationError);
+    }
+
+    return res.status(201).json({
       success: true,
       data: mapCommentToResponse(comment, comment.voteCount),
       message: 'Comment created successfully'

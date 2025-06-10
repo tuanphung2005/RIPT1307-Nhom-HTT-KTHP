@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,75 +8,71 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  fullName  String
-  role      UserRole @default(STUDENT)
-  isActive  Boolean  @default(true)
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  posts        Post[]
-  comments     Comment[]
-  postVotes    PostVote[]
-  commentVotes CommentVote[]
+  id                   String         @id @default(cuid())
+  username             String         @unique
+  email                String         @unique
+  password             String
+  fullName             String
+  role                 UserRole       @default(STUDENT)
+  isActive             Boolean        @default(true)
+  avatar               String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  commentVotes         CommentVote[]
+  comments             Comment[]
+  notificationsCreated Notification[] @relation("NotificationAuthor")
+  notifications        Notification[]
+  postVotes            PostVote[]
+  posts                Post[]
 
   @@map("users")
 }
 
 model Post {
-  id         String   @id @default(cuid())
-  title      String
-  content    String   @db.Text
-  tags       Json     // Array of strings stored as JSON
-  authorId   String
-  authorName String   // Denormalized for easier queries
-  authorRole UserRole // Denormalized for easier queries
-  voteCount  Int      @default(0) // Computed field for performance (renamed from votes)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String         @id @default(cuid())
+  title         String
+  content       String         @db.Text
+  tags          String         @db.LongText
+  authorId      String
+  authorName    String
+  authorRole    UserRole
+  voteCount     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  comments      Comment[]
+  notifications Notification[]
+  postVotes     PostVote[]
+  author        User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Relations
-  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments     Comment[]
-  postVotes    PostVote[]
-
-  // Indexes for better search performance
   @@index([title])
   @@index([createdAt])
   @@index([voteCount])
-  @@index([authorId])
+  @@index([authorId], map: "posts_authorId_fkey")
   @@map("posts")
 }
 
 model Comment {
-  id              String   @id @default(cuid())
-  content         String   @db.Text
+  id              String        @id @default(cuid())
+  content         String        @db.Text
   postId          String
   authorId        String
-  authorName      String   // Denormalized for easier queries
-  authorRole      UserRole // Denormalized for easier queries
-  parentCommentId String?  // For nested comments/replies
-  voteCount       Int      @default(0) // Computed field for performance (renamed from votes)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  authorName      String
+  authorRole      UserRole
+  parentCommentId String?
+  voteCount       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  commentVotes    CommentVote[]
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentComment   Comment?      @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies         Comment[]     @relation("CommentReplies")
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  // Relations
-  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author        User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parentComment Comment?      @relation("CommentReplies", fields: [parentCommentId], references: [id])
-  replies       Comment[]     @relation("CommentReplies")
-  commentVotes  CommentVote[]
-
-  // Indexes for better performance
-  @@index([postId])
   @@index([createdAt])
   @@index([voteCount])
   @@index([authorId])
+  @@index([parentCommentId], map: "comments_parentCommentId_fkey")
+  @@index([postId], map: "comments_postId_fkey")
   @@map("comments")
 }
 
@@ -89,12 +82,11 @@ model PostVote {
   userId    String
   type      VoteType
   createdAt DateTime @default(now())
-
-  // Relations
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
+  @@index([userId], map: "post_votes_userId_fkey")
   @@map("post_votes")
 }
 
@@ -104,13 +96,34 @@ model CommentVote {
   userId    String
   type      VoteType
   createdAt DateTime @default(now())
-
-  // Relations
-  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([commentId, userId])
+  @@index([userId], map: "comment_votes_userId_fkey")
   @@map("comment_votes")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  postId    String?
+  commentId String?
+  authorId  String?
+  createdAt DateTime         @default(now())
+  author    User?            @relation("NotificationAuthor", fields: [authorId], references: [id])
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([authorId], map: "notifications_authorId_fkey")
+  @@index([postId], map: "notifications_postId_fkey")
+  @@map("notifications")
 }
 
 enum UserRole {
@@ -122,4 +135,9 @@ enum UserRole {
 enum VoteType {
   UPVOTE
   DOWNVOTE
+}
+
+enum NotificationType {
+  COMMENT_ON_POST
+  REPLY_TO_COMMENT
 }

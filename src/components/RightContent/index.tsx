@@ -1,6 +1,7 @@
 import React from 'react';
 import { useModel } from 'umi';
 import AvatarDropdown from './AvatarDropdown';
+import NotificationDropdown from '@/components/NotificationDropdown';
 import styles from './index.less';
 
 export type SiderTheme = 'light' | 'dark';
@@ -11,12 +12,11 @@ const GlobalHeaderRight: React.FC = () => {
 	if (!initialState || !initialState.currentUser) {
 		return null;
 	}
-
 	return (
 		<div className={styles.right}>
 			{/* <ModuleSwitch /> */}
 
-			{/* <NoticeIconView /> */}
+			<NotificationDropdown />
 
 			{/* <Tooltip title='Giới thiệu chung' placement='bottom'>
 				<a onClick={() => history.push('/gioi-thieu')}>

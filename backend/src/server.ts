@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import postRoutes from './routes/posts';
 import commentRoutes from './routes/comments';
 import userRoutes from './routes/users';
+import notificationRoutes from './routes/notifications';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
