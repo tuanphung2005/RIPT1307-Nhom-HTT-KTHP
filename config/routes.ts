@@ -23,12 +23,6 @@
 		name: 'Dashboard',
 		component: './TrangChu',
 		icon: 'HomeOutlined',	},
-	{
-		path: '/random-user',
-		name: 'RandomUser',
-		component: './RandomUser',
-		icon: 'ArrowsAltOutlined',
-	},
 
 	// ADMIN ROUTES
 	{
