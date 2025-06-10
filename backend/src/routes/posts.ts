@@ -93,6 +93,12 @@ router.get('/', async (req: PostsAPIRequest, res: Response) => {
               role: true,
             }
           },
+          postVotes: {
+            select: {
+              userId: true,
+              type: true,
+            }
+          },
           _count: {
             select: {
               comments: true,
@@ -102,8 +108,19 @@ router.get('/', async (req: PostsAPIRequest, res: Response) => {
         }
       }),
       prisma.post.count()
-    ]);    // Get posts + pagination + map format
-    const postsWithVotes = posts.map(post => mapPostToResponse(post, post.voteCount));
+    ]);
+
+    // Get posts + pagination + map format with vote information
+    const postsWithVotes = posts.map(post => {
+      const upvotedBy = post.postVotes.filter(vote => vote.type === 'UPVOTE').map(vote => vote.userId);
+      const downvotedBy = post.postVotes.filter(vote => vote.type === 'DOWNVOTE').map(vote => vote.userId);
+      
+      const postResponse = mapPostToResponse(post, post.voteCount);
+      postResponse.upvotedBy = upvotedBy;
+      postResponse.downvotedBy = downvotedBy;
+      
+      return postResponse;
+    });
 
     return res.json({
       success: true,
@@ -219,6 +236,12 @@ router.get('/:id', async (req: Request, res: Response) => {
             role: true,
           }
         },
+        postVotes: {
+          select: {
+            userId: true,
+            type: true,
+          }
+        },
         _count: {
           select: {
             comments: true,
@@ -233,9 +256,19 @@ router.get('/:id', async (req: Request, res: Response) => {
         success: false,
         message: 'Post not found'
       });
-    }    return res.json({
+    }
+
+    // Map the vote data to upvotedBy and downvotedBy arrays
+    const upvotedBy = post.postVotes.filter(vote => vote.type === 'UPVOTE').map(vote => vote.userId);
+    const downvotedBy = post.postVotes.filter(vote => vote.type === 'DOWNVOTE').map(vote => vote.userId);
+
+    const postResponse = mapPostToResponse(post, post.voteCount);
+    postResponse.upvotedBy = upvotedBy;
+    postResponse.downvotedBy = downvotedBy;
+
+    return res.json({
       success: true,
-      data: mapPostToResponse(post, post.voteCount)
+      data: postResponse
     });
   } catch (error) {
     console.error('Error getting post:', error);
@@ -426,10 +459,27 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
             fullName: true,
             role: true,
           }
+        },
+        commentVotes: {
+          select: {
+            userId: true,
+            type: true,
+          }
         }
       }
-    });    // mapp comment thanh votecount dung denormalized
-    const commentsWithVotes = comments.map(comment => mapCommentToResponse(comment, comment.voteCount));
+    });
+
+    // Map comments with vote information
+    const commentsWithVotes = comments.map(comment => {
+      const upvotedBy = comment.commentVotes.filter(vote => vote.type === 'UPVOTE').map(vote => vote.userId);
+      const downvotedBy = comment.commentVotes.filter(vote => vote.type === 'DOWNVOTE').map(vote => vote.userId);
+      
+      const commentResponse = mapCommentToResponse(comment, comment.voteCount);
+      commentResponse.upvotedBy = upvotedBy;
+      commentResponse.downvotedBy = downvotedBy;
+      
+      return commentResponse;
+    });
 
     return res.json({
       success: true,
@@ -544,13 +594,23 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
           })
         ]);
       }
-    }
-
-    // update vote
+    }    // update vote
     const updatedPost = await prisma.post.findUnique({
       where: { id: postId },
       select: { voteCount: true }
     });
+
+    // Send notification for post upvotes (only for new upvotes, not removes or updates)
+    try {
+      if (type === 'upvote' && (!existingVote || existingVote.type !== 'UPVOTE')) {
+        console.log(`🔔 About to send post upvote notification for post: ${postId}, voter: ${userId}`);
+        await NotificationService.notifyPostUpvoted(postId, userId);
+        console.log(`🔔 Post upvote notification sent successfully`);
+      }
+    } catch (notificationError) {
+      console.error('🔔 Error creating post upvote notification:', notificationError);
+      // Don't fail the vote if notification fails
+    }
 
     return res.json({
       success: true,

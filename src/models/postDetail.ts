@@ -51,13 +51,40 @@ export default function usePostDetail() {
     setCommentContent('');
     setReplyContent('');
     setReplyingTo(null);
-  };
-  // Vote methods
+  };  // Vote methods
   const handleVote = async (targetId: string, type: 'upvote' | 'downvote', targetType: 'post' | 'comment') => {
     try {
-      const response = await postsService.vote({ targetId, type }, targetType);
+      // Determine current vote state
+      let currentVote = null;
+      if (targetType === 'post' && currentPost) {
+        currentVote = getUserVoteType(currentPost.upvotedBy, currentPost.downvotedBy);
+
+      } else {
+        const comment = comments.find(c => c.id === targetId);
+        if (comment) {
+          currentVote = getUserVoteType(comment.upvotedBy, comment.downvotedBy);
+
+        }
+      }
+
+      // Determine the action to take
+      let voteAction: 'upvote' | 'downvote' | 'remove' = type;
+      
+      if (currentVote === type) {
+
+        voteAction = 'remove';
+
+      } else if (currentVote && currentVote !== type) {
+
+      } else {
+
+      }
+
+      const response = await postsService.vote({ targetId, type: voteAction }, targetType);
+      
       if (response.success) {
 
+        // Refresh the data to show updated vote counts and states
         if (targetType === 'post' && currentPost) {
           await loadPost(currentPost.id);
         } else {

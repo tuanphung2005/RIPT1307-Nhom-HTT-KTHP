@@ -104,7 +104,7 @@ export interface SearchFilters {
 export interface NotificationResponse {
   id: string;
   userId: string;
-  type: 'COMMENT_ON_POST' | 'REPLY_TO_COMMENT';
+  type: 'COMMENT_ON_POST' | 'REPLY_TO_COMMENT' | 'PASSWORD_RESET' | 'POST_UPVOTED';
   title: string;
   message: string;
   isRead: boolean;

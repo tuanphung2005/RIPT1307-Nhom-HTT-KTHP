@@ -145,10 +145,10 @@ class UserManagementService {
       };
     }
   }
-
   // Reset user password (admin only)
   async resetUserPassword(userId: string, data: ResetPasswordData): Promise<UserResponse> {
     try {
+      
       const currentUser = authService.getCurrentUser();
       
       if (!currentUser || currentUser.role !== 'admin') {
@@ -158,14 +158,16 @@ class UserManagementService {
         };
       }
 
-      const response = await backendApiService.post(API_CONFIG.ENDPOINTS.USERS.RESET_PASSWORD(userId), data);
+      const endpoint = API_CONFIG.ENDPOINTS.USERS.RESET_PASSWORD(userId);
+ 
+      const response = await backendApiService.post(endpoint, data);
 
       return {
         success: response.success,
         message: response.message || 'Đặt lại mật khẩu thành công!'
       };
     } catch (error: any) {
-      console.error('Error resetting password:', error);
+
       return {
         success: false,
         message: error.response?.data?.message || 'Có lỗi xảy ra khi đặt lại mật khẩu'

@@ -102,18 +102,22 @@ export default function useUserManagement() {
     } catch (error) {
       message.error('Không thể thay đổi trạng thái người dùng');
     }
-  };
-  const handleResetPassword = async (userId: string) => {
+  };  const handleResetPassword = async (userId: string) => {
     try {
 
+
       const newPassword = 'newpass123';
+      
       const response = await userManagementService.resetUserPassword(userId, { newPassword });
+      
+      
       if (response.success) {
         message.success(response.message || 'Đặt lại mật khẩu thành công');
       } else {
         message.error(response.message || 'Không thể đặt lại mật khẩu');
       }
     } catch (error) {
+      console.error('🔧 UserManagement: Error in handleResetPassword:', error);
       message.error('Không thể reset mật khẩu');
     }
   };

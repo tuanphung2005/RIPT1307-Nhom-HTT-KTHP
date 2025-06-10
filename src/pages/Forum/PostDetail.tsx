@@ -115,7 +115,13 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
             </div>
           </div>            <div className={styles.voteSection}>
             <Space direction="vertical" align="center">
-              <Tooltip title="Upvote">
+              <Tooltip 
+                title={
+                  getUserVoteType(post.upvotedBy, post.downvotedBy) === 'upvote' 
+                    ? "Nhấn để bỏ upvote" 
+                    : "Upvote bài đăng này"
+                }
+              >
                 <Button
                   icon={getUserVoteType(post.upvotedBy, post.downvotedBy) === 'upvote' ? <LikeFilled /> : <LikeOutlined />}
                   type="text"
@@ -124,7 +130,13 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
                 />
               </Tooltip>
               <Text strong className={styles.voteCount}>{post.votes}</Text>
-              <Tooltip title="Downvote">
+              <Tooltip 
+                title={
+                  getUserVoteType(post.upvotedBy, post.downvotedBy) === 'downvote' 
+                    ? "Nhấn để bỏ downvote" 
+                    : "Downvote bài đăng này"
+                }
+              >
                 <Button
                   icon={getUserVoteType(post.upvotedBy, post.downvotedBy) === 'downvote' ? <DislikeFilled /> : <DislikeOutlined />}
                   type="text"
@@ -202,21 +214,37 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
                   </Space>
                 </div>                  <div className={styles.commentVotes}>
                   <Space>
-                    <Button
-                      size="small"
-                      type="text"
-                      icon={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'upvote' ? <LikeFilled /> : <LikeOutlined />}
-                      onClick={() => handleVote(comment.id, 'upvote', 'comment')}
-                      className={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'upvote' ? styles.voted : ''}
-                    />
+                    <Tooltip 
+                      title={
+                        getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'upvote' 
+                          ? "Nhấn để bỏ upvote" 
+                          : "Upvote bình luận này"
+                      }
+                    >
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'upvote' ? <LikeFilled /> : <LikeOutlined />}
+                        onClick={() => handleVote(comment.id, 'upvote', 'comment')}
+                        className={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'upvote' ? styles.voted : ''}
+                      />
+                    </Tooltip>
                     <Text>{comment.votes}</Text>
-                    <Button
-                      size="small"
-                      type="text"
-                      icon={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'downvote' ? <DislikeFilled /> : <DislikeOutlined />}
-                      onClick={() => handleVote(comment.id, 'downvote', 'comment')}
-                      className={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'downvote' ? styles.voted : ''}
-                    />
+                    <Tooltip 
+                      title={
+                        getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'downvote' 
+                          ? "Nhấn để bỏ downvote" 
+                          : "Downvote bình luận này"
+                      }
+                    >
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'downvote' ? <DislikeFilled /> : <DislikeOutlined />}
+                        onClick={() => handleVote(comment.id, 'downvote', 'comment')}
+                        className={getUserVoteType(comment.upvotedBy, comment.downvotedBy) === 'downvote' ? styles.voted : ''}
+                      />
+                    </Tooltip>
                   </Space>
                 </div>
               </div>              <div className={styles.commentContent}>
@@ -280,21 +308,37 @@ const PostDetail: React.FC<PostDetailProps> = ({ match }) => {
                       </Space>
                     </div>                      <div className={styles.commentVotes}>
                       <Space>
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'upvote' ? <LikeFilled /> : <LikeOutlined />}
-                          onClick={() => handleVote(reply.id, 'upvote', 'comment')}
-                          className={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'upvote' ? styles.voted : ''}
-                        />
+                        <Tooltip 
+                          title={
+                            getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'upvote' 
+                              ? "Nhấn để bỏ upvote" 
+                              : "Upvote phản hồi này"
+                          }
+                        >
+                          <Button
+                            size="small"
+                            type="text"
+                            icon={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'upvote' ? <LikeFilled /> : <LikeOutlined />}
+                            onClick={() => handleVote(reply.id, 'upvote', 'comment')}
+                            className={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'upvote' ? styles.voted : ''}
+                          />
+                        </Tooltip>
                         <Text>{reply.votes}</Text>
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'downvote' ? <DislikeFilled /> : <DislikeOutlined />}
-                          onClick={() => handleVote(reply.id, 'downvote', 'comment')}
-                          className={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'downvote' ? styles.voted : ''}
-                        />
+                        <Tooltip 
+                          title={
+                            getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'downvote' 
+                              ? "Nhấn để bỏ downvote" 
+                              : "Downvote phản hồi này"
+                          }
+                        >
+                          <Button
+                            size="small"
+                            type="text"
+                            icon={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'downvote' ? <DislikeFilled /> : <DislikeOutlined />}
+                            onClick={() => handleVote(reply.id, 'downvote', 'comment')}
+                            className={getUserVoteType(reply.upvotedBy, reply.downvotedBy) === 'downvote' ? styles.voted : ''}
+                          />
+                        </Tooltip>
                       </Space>
                     </div>
                   </div>                  <div className={styles.commentContent}>

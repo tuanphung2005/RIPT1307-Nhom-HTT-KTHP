@@ -15,6 +15,8 @@ import {
   CommentOutlined,
   MessageOutlined,
   CheckOutlined,
+  SafetyOutlined,
+  LikeOutlined,
 } from '@ant-design/icons';
 import { useModel, history } from 'umi';
 import { Notification } from '@/services/notificationService';
@@ -33,20 +35,23 @@ const NotificationDropdown: React.FC = () => {
     loadMoreNotifications,
     formatNotificationTime,
   } = useModel('notifications');
-
   const handleNotificationClick = async (notification: Notification) => {
     // Mark as read if not already read
     if (!notification.isRead) {
       await markAsRead(notification.id);
     }
 
-    // Navigate to the related post
-    if (notification.postId) {
+    // Navigate to the related post only for post/comment notifications
+    if (notification.type !== 'PASSWORD_RESET' && notification.postId) {
       history.push(`/forum/${notification.postId}`);
     }
-  };
-  const getNotificationIcon = (type: Notification['type']) => {
-    const iconClass = type === 'COMMENT_ON_POST' ? 'comment' : type === 'REPLY_TO_COMMENT' ? 'reply' : '';
+    // For password reset notifications, we don't navigate anywhere
+    // The notification itself contains all the necessary information
+  };  const getNotificationIcon = (type: Notification['type']) => {
+    const iconClass = type === 'COMMENT_ON_POST' ? 'comment' : 
+                     type === 'REPLY_TO_COMMENT' ? 'reply' : 
+                     type === 'PASSWORD_RESET' ? 'password' : 
+                     type === 'POST_UPVOTED' ? 'upvote' : '';
     
     switch (type) {
       case 'COMMENT_ON_POST':
@@ -59,6 +64,18 @@ const NotificationDropdown: React.FC = () => {
         return (
           <div className={`${styles.notificationIcon} ${iconClass}`}>
             <MessageOutlined />
+          </div>
+        );
+      case 'PASSWORD_RESET':
+        return (
+          <div className={`${styles.notificationIcon} ${iconClass}`}>
+            <SafetyOutlined />
+          </div>
+        );
+      case 'POST_UPVOTED':
+        return (
+          <div className={`${styles.notificationIcon} ${iconClass}`}>
+            <LikeOutlined />
           </div>
         );
       default:
@@ -109,7 +126,6 @@ const NotificationDropdown: React.FC = () => {
           <Button
             type="link"
             size="small"
-            icon={<CheckOutlined />}
             onClick={markAllAsRead}
           >
             Đánh dấu tất cả đã đọc

@@ -242,7 +242,80 @@ export class NotificationService {
         authorId: replyAuthorId,
       });
     } catch (error) {
-      console.error('Error creating comment reply notification:', error);
+      console.error('Error creating comment reply notification:', error);      throw error;
+    }
+  }
+
+  /**
+   * Create notification when someone upvotes a post
+   */
+  static async notifyPostUpvoted(postId: string, voterUserId: string) {
+    try {
+      // Get the post and its author
+      const post = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { 
+          id: true, 
+          title: true, 
+          authorId: true,
+        },
+      });
+
+      if (!post || post.authorId === voterUserId) {
+        // Don't notify if post doesn't exist or if author upvoted their own post
+        return null;
+      }
+
+      // Get the voter's name
+      const voter = await prisma.user.findUnique({
+        where: { id: voterUserId },
+        select: { fullName: true },
+      });
+
+      if (!voter) return null;
+
+      return await NotificationService.createNotification({
+        userId: post.authorId,
+        type: 'POST_UPVOTED',
+        title: 'Your post was liked',
+        message: `${voter.fullName} liked your post "${post.title}"`,
+        postId: postId,
+        authorId: voterUserId,
+      });
+    } catch (error) {
+      console.error('Error creating post upvote notification:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notify user when admin resets their password
+   */
+  static async notifyPasswordReset(userId: string, adminId: string, newPassword: string) {
+    try {
+      // Get admin info
+      const admin = await prisma.user.findUnique({
+        where: { id: adminId },
+        select: { fullName: true, role: true },
+      });
+
+      if (!admin) return null;
+
+      // Get user info
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { fullName: true, username: true },
+      });
+
+      if (!user) return null;      return await NotificationService.createNotification({
+        userId: userId,
+        type: 'PASSWORD_RESET',
+        title: 'Mật khẩu đã được đặt lại',
+        message: `Quản trị viên ${admin.fullName} đã đặt lại mật khẩu của bạn. Mật khẩu mới: ${newPassword}. Vui lòng đăng nhập và thay đổi mật khẩu ngay lập tức.`,
+        authorId: adminId,
+      });
+    } catch (error) {
+      console.error('Error creating password reset notification:', error);
       throw error;
     }
   }

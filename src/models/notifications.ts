@@ -15,22 +15,21 @@ export default function useNotifications() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   // Load notifications
   const loadNotifications = async (page: number = 1, reset: boolean = false) => {
-    console.log('🔔 loadNotifications called, page:', page, 'reset:', reset);
+
     
     // Check if user is authenticated first
     if (!authService.isAuthenticated() && !initialState?.currentUser) {
-      console.log('🔔 User not authenticated, skipping notification load');
+
       return;
     }
 
-    console.log('🔔 User authenticated, proceeding with API call');
+
     setLoading(true);
     try {
       const response = await notificationService.getNotifications(page, 20);
-      console.log('🔔 Notification API response:', response);
-      
+
       if (response.success && response.notifications) {
-        console.log('🔔 Setting notifications:', response.notifications.length, 'items');
+     
         if (reset || page === 1) {
           setNotifications(response.notifications);
         } else {
@@ -39,7 +38,7 @@ export default function useNotifications() {
         setUnreadCount(response.unreadCount || 0);        setHasMore(response.hasMore || false);
         setCurrentPage(page);
       } else {
-        console.log('🔔 API response not successful or no notifications');
+
         // Only show error message if there is one and it's not an auth issue
         if (response.message) {
           message.error(response.message);
@@ -154,17 +153,13 @@ export default function useNotifications() {
     }
   };  // Initialize notifications on mount
   useEffect(() => {
-    console.log('🔔 Notification useEffect triggered');
-    console.log('🔔 authService.isAuthenticated():', authService.isAuthenticated());
-    console.log('🔔 initialState?.currentUser:', initialState?.currentUser);
-    console.log('🔔 localStorage forum_token:', localStorage.getItem('forum_token') ? 'EXISTS' : 'NOT FOUND');
-    
+
     // Only load notifications if user is authenticated
     if (authService.isAuthenticated() || initialState?.currentUser) {
-      console.log('🔔 Loading notifications...');
+
       loadNotifications();
     } else {
-      console.log('🔔 User not authenticated, skipping notification load');
+
     }
   }, [initialState?.currentUser]);
 

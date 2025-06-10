@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { prisma } from '../config/database';
+import { NotificationService } from '../services/notificationService';
 import bcrypt from 'bcrypt';
 
 const router = Router();
@@ -342,6 +343,7 @@ router.post('/:id/reset-password', authenticateToken, requireRole(['admin']), as
   try {
     const userId = req.params.id;
     const { newPassword } = req.body;
+    const adminId = req.user!.id;
 
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({
@@ -371,7 +373,15 @@ router.post('/:id/reset-password', authenticateToken, requireRole(['admin']), as
       data: {
         password: hashedPassword
       }
-    });
+    });    // Create notification for the user about password reset
+   
+    try {
+      await NotificationService.notifyPasswordReset(userId, adminId, newPassword);
+     
+    } catch (notificationError) {
+      console.error('Failed to send password reset notification:', notificationError);
+      // Don't fail the password reset if notification fails
+    }
 
     return res.json({
       success: true,

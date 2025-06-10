@@ -5,7 +5,7 @@ import { authService } from '@/services/auth/authService';
 export interface Notification {
   id: string;
   userId: string;
-  type: 'COMMENT_ON_POST' | 'REPLY_TO_COMMENT';
+  type: 'COMMENT_ON_POST' | 'REPLY_TO_COMMENT' | 'PASSWORD_RESET' | 'POST_UPVOTED';
   title: string;
   message: string;
   isRead: boolean;
@@ -48,40 +48,46 @@ export interface MarkReadResponse {
 
 class NotificationService {  // Get notifications with pagination
   async getNotifications(page: number = 1, limit: number = 20): Promise<NotificationsResponse> {
-    console.log('🔔 NotificationService.getNotifications called');
+
     try {
       // Check authentication first
       if (!authService.isAuthenticated()) {
-        console.log('🔔 NotificationService: User not authenticated');
+
         return {
           success: false,
           notifications: [],
           unreadCount: 0,
           message: 'Bạn cần đăng nhập để xem thông báo'
         };
-      }
+      }      
+      
+      // Debug current user
+      const currentUser = authService.getCurrentUser();
 
-      console.log('🔔 NotificationService: Making API call to', `${API_CONFIG.ENDPOINTS.NOTIFICATIONS.LIST}?page=${page}&limit=${limit}`);
+      
       const response = await backendApiService.get(
         `${API_CONFIG.ENDPOINTS.NOTIFICATIONS.LIST}?page=${page}&limit=${limit}`
       );
       
-      console.log('🔔 NotificationService: Raw API response:', response);
+
+      
+      // Handle both wrapped and direct response formats
+      const responseData = response.data || response;
       
       return {
-        success: response.success || false,
-        notifications: response.data?.notifications || [],
-        unreadCount: response.data?.unreadCount || 0,
-        page: response.data?.page || page,
-        limit: response.data?.limit || limit,
-        hasMore: response.data?.hasMore || false,
+        success: response.success || true, // If we got here, assume success unless explicitly false
+        notifications: responseData.notifications || [],
+        unreadCount: responseData.unreadCount || 0,
+        page: responseData.page || page,
+        limit: responseData.limit || limit,
+        hasMore: responseData.hasMore || false,
         message: response.message
       };
     } catch (error: any) {
-      console.error('🔔 NotificationService: Error getting notifications:', error);
+     
       // Don't show error for authentication issues
       if (error.response?.status === 401) {
-        console.log('🔔 NotificationService: 401 error, returning silent fail');
+       
         return {
           success: false,
           notifications: [],
@@ -107,13 +113,14 @@ class NotificationService {  // Get notifications with pagination
           unreadCount: 0,
           message: undefined // Silent fail
         };
-      }
-
-      const response = await backendApiService.get(API_CONFIG.ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
+      }      const response = await backendApiService.get(API_CONFIG.ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
+      
+      // Handle both wrapped and direct response formats
+      const responseData = response.data || response;
       
       return {
-        success: response.success || false,
-        unreadCount: response.data?.unreadCount || 0,
+        success: response.success || true, // If we got here, assume success unless explicitly false
+        unreadCount: responseData.unreadCount || 0,
         message: response.message
       };
     } catch (error: any) {

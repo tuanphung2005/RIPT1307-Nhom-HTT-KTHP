@@ -140,4 +140,6 @@ enum VoteType {
 enum NotificationType {
   COMMENT_ON_POST
   REPLY_TO_COMMENT
+  PASSWORD_RESET
+  POST_UPVOTED
 }
