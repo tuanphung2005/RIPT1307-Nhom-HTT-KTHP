@@ -75,12 +75,12 @@ export const getAuthHeaders = (): Record<string, string> => {
 // Development helper to log current configuration
 export const logCurrentConfig = (): void => {
   if (FORUM_CONFIG.IS_DEVELOPMENT) {
-    console.group('🔧 Forum API Configuration');
-    console.log('🌐 API Base URL:', FORUM_CONFIG.API_BASE_URL);
-    console.log('🖥️ Backend URL:', FORUM_CONFIG.BACKEND_URL);
-    console.log('💻 Frontend URL:', FORUM_CONFIG.FRONTEND_URL);
-    console.log('🔌 WebSocket URL:', FORUM_CONFIG.WS_URL);
-    console.log('🏗️ Environment:', process.env.NODE_ENV);
+    console.group('');
+    console.log('', FORUM_CONFIG.API_BASE_URL);
+    console.log('', FORUM_CONFIG.BACKEND_URL);
+    console.log('', FORUM_CONFIG.FRONTEND_URL);
+    console.log('', FORUM_CONFIG.WS_URL);
+    console.log('', process.env.NODE_ENV);
     console.groupEnd();
   }
 };
