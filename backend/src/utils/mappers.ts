@@ -67,7 +67,6 @@ export function mapPostToResponse(
   } catch (error) {
     tags = [];
   }
-
   return {
     id: post.id,
     title: post.title,
@@ -79,6 +78,7 @@ export function mapPostToResponse(
     votes,
     upvotedBy: [], // Will be populated by the API route
     downvotedBy: [], // Will be populated by the API route
+    commentCount: post._count?.comments || 0, // Include comment count
     createdAt: post.createdAt.toISOString(),
     updatedAt: post.updatedAt.toISOString(),
   };

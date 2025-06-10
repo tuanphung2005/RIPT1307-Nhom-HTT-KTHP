@@ -31,6 +31,7 @@ export interface PostResponse {
   votes: number; // renamed from voteCount to match frontend
   upvotedBy: string[]; // computed from PostVote records
   downvotedBy: string[]; // computed from PostVote records
+  commentCount?: number; // number of comments on this post
   createdAt: string;
   updatedAt: string;
 }

@@ -11,6 +11,7 @@ export interface Post {
   votedBy: string[]; // User IDs who voted
   upvotedBy: string[]; // User IDs who upvoted
   downvotedBy: string[]; // User IDs who downvoted
+  commentCount?: number; // Number of comments on this post
   createdAt: string;
   updatedAt: string;
   isActive: boolean;

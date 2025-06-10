@@ -75,14 +75,17 @@ const PostTable: React.FC<PostTableProps> = ({ posts, loading, onDelete }) => {
           {votes > 0 ? `+${votes}` : votes}
         </Tag>
       ),
-    },
-    {
+    },    {
       title: 'Bình luận',
-      dataIndex: 'comments',
-      key: 'comments',
+      dataIndex: 'commentCount',
+      key: 'commentCount',
       width: 100,
       align: 'center',
-      render: () => '-',
+      render: (commentCount: number) => (
+        <Tag color="blue">
+          {commentCount || 0}
+        </Tag>
+      ),
     },
     {
       title: 'Thao tác',
